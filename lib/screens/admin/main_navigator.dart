@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'agenda.dart';
 // import 'asistentes.dart';
 import 'comunidad.dart';
-import 'envents_list.dart';
+import 'main.dart';
 import 'mensajes.dart';
 import 'notificaciones.dart';
 
@@ -12,7 +12,7 @@ void navigateToPage(BuildContext context, int index) {
     case 0:
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const EventsListAdmin()),
+        MaterialPageRoute(builder: (_) => const EventScreen()),
       );
       break;
     case 1:

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main.dart'; // Pantalla destino (EventScreen)
@@ -46,7 +47,12 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
 
       if (admin != null) {
         if (!mounted) return;
-        Navigator.pushReplacement(
+        final adminId = admin['id'] as int; // <- tu consulta previa
+        final nombre = admin['nombre'] as String; // si existe el campo
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.setInt('adminId', adminId);
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const EventScreen()),
         );

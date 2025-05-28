@@ -120,7 +120,7 @@ class _EventScreenState extends State<EventScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.indigo,
         onPressed: () {
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => const NuevoEventoScreen()),
           );
