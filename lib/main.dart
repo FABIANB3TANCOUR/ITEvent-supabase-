@@ -8,7 +8,7 @@ void main() async {
 
   await Supabase.initialize(
     // ← NUEVO
-    url: 'https://bsiepzgutwsmbeftyrdd.supabase.co ', // ← CAMBIA ESTO
+    url: 'https://bsiepzgutwsmbeftyrdd.supabase.co', // ← CAMBIA ESTO
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzaWVwemd1dHdzbWJlZnR5cmRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0MTUxMDQsImV4cCI6MjA2Mzk5MTEwNH0.5UxlIN7IueevK82QoWly1MoGil1kRSU8cFoygVns-T8', // ← CAMBIA ESTO
   );
