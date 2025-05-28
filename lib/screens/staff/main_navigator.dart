@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:itevent/screens/admin/main.dart';
 import 'package:itevent/screens/staff/perfil_propio.dart';
 
+import '../type_logins.dart';
 import 'agendar_sesion.dart';
 import 'comunidad.dart';
+import 'event_detail.dart';
 import 'perfil_asistente.dart';
 import 'perfil_invitado.dart';
-import 'type_logins.dart';
-
-import 'event_detail.dart';
-
 
 class MainNavigatorStaff extends StatefulWidget {
   const MainNavigatorStaff({super.key});
@@ -22,8 +20,8 @@ class _MainNavigatorStaffState extends State<MainNavigatorStaff> {
   int _selectedIndex = 0;
 
   // ⚠️ Cambia estos valores por los valores reales cuando tengas el userId y eventoId
-  final String userId = 'usuario_id';       // ← Aquí va el ID del usuario real
-  final String eventoId = 'evento_id';      // ← Aquí va el ID del evento real
+  final String userId = 'usuario_id'; // ← Aquí va el ID del usuario real
+  final String eventoId = 'evento_id'; // ← Aquí va el ID del evento real
 
   late final List<Widget> _pages;
 
@@ -31,11 +29,11 @@ class _MainNavigatorStaffState extends State<MainNavigatorStaff> {
   void initState() {
     super.initState();
     _pages = [
-      AgendaScreen(userId: 'id',eventoId: 'id',),
+      AgendaScreen(userId: 'id', eventoId: 'id'),
       const ComunidadScreen(),
       PerfilUsuarioPage(userId: userId),
       PerfilInvitadoPage(uuid: userId),
-      Typerlogin(),
+      TypeLogin(),
       EventScreen(), // <-- Aquí está corregido y definido como const si aplica
       InternationalEventScreen(eventoId: eventoId, userId: userId),
       PerfilPropioStaff(),
@@ -56,9 +54,15 @@ class _MainNavigatorStaffState extends State<MainNavigatorStaff> {
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Agendas'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Agendas',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Comunidad'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_pin), label: 'Asistente'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_pin),
+            label: 'Asistente',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Invitado'),
           BottomNavigationBarItem(icon: Icon(Icons.logout), label: 'Logout'),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Eventos'),
