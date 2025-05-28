@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // ← NUEVO
+
 import 'screens/type_logins.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // ← NUEVO
 
-  await Supabase.initialize( // ← NUEVO
-    url: 'https://dzkdnokjmbdwetqkdvgr.supabase.co', // ← CAMBIA ESTO
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6a2Rub2tqbWJkd2V0cWtkdmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzODM2MDksImV4cCI6MjA2Mzk1OTYwOX0.esgBN4DKRn1CBA55OeS8zUzacPCtntsGOSNYXTwySlE',            // ← CAMBIA ESTO
+  await Supabase.initialize(
+    // ← NUEVO
+    url: 'https://bsiepzgutwsmbeftyrdd.supabase.co', // ← CAMBIA ESTO
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzaWVwemd1dHdzbWJlZnR5cmRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0MTUxMDQsImV4cCI6MjA2Mzk5MTEwNH0.5UxlIN7IueevK82QoWly1MoGil1kRSU8cFoygVns-T8', // ← CAMBIA ESTO
   );
 
   runApp(const ITEventApp());
@@ -37,10 +40,7 @@ class WelcomePage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF162A87),
-              Colors.white,
-            ],
+            colors: [Color(0xFF162A87), Colors.white],
           ),
         ),
         child: Column(
