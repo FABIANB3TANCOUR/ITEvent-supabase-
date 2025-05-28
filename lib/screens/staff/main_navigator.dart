@@ -6,7 +6,7 @@ import 'agendar_sesion.dart';
 import 'comunidad.dart';
 import 'perfil_asistente.dart';
 import 'perfil_invitado.dart';
-import 'login_staff.dart';
+import 'type_logins.dart';
 
 import 'event_detail.dart';
 
