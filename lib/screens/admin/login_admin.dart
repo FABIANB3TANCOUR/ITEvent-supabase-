@@ -48,7 +48,6 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
       if (admin != null) {
         if (!mounted) return;
         final adminId = admin['id'] as int; // <- tu consulta previa
-        final nombre = admin['nombre'] as String; // si existe el campo
         final prefs = await SharedPreferences.getInstance();
 
         await prefs.setInt('adminId', adminId);

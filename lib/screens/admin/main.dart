@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'event_detail.dart';
 import 'event_new.dart';
 import 'main_navigator.dart';
 import 'perfil.dart';
@@ -111,7 +112,13 @@ class _EventScreenState extends State<EventScreen> {
                       ),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: () {
-                        // Navegar a pantalla de detalles si la implementas
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (_) => EventDetailAdmin(eventId: evento['id']),
+                          ),
+                        );
                       },
                     );
                   },
