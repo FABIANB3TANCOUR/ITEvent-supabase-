@@ -53,34 +53,34 @@ class _ModifPerfilState extends State<ModifPerfil> {
   }
 
   Future<void> _guardarPerfil() async {
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final updatedData = await supabase
-          .from('administradores')
-          .update({
-            'telefono': _telefonoController.text,
-            'celular': _celularController.text,
-            'correo': _correoController.text,
-            'direccion': _direccionController.text,
-            'linkedin': _linkedinController.text,
-          })
-          .eq('id', widget.adminId)
-          .select()
-          .single();
+  try {
+    await supabase
+        .from('administradores')
+        .update({
+          'telefono': _telefonoController.text,
+          'celular': _celularController.text,
+          'correo': _correoController.text,
+          'direccion': _direccionController.text,
+          'linkedin': _linkedinController.text,
+        })
+        .eq('id', widget.adminId)
+        .select()
+        .single();
 
-      // Si llegamos aquí, la actualización fue exitosa
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Perfil actualizado con éxito')),
-      );
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al actualizar perfil: $error')),
-      );
-    }
-
-    setState(() => _isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Perfil actualizado con éxito')),
+    );
+  } catch (error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al actualizar perfil: $error')),
+    );
   }
+
+  setState(() => _isLoading = false);
+}
+
 
   Widget _buildTextField(String label, TextEditingController controller) {
     return Padding(
