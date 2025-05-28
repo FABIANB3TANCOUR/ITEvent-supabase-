@@ -35,7 +35,7 @@ class _MainNavigatorStaffState extends State<MainNavigatorStaff> {
       const ComunidadScreen(),
       PerfilUsuarioPage(userId: userId),
       PerfilInvitadoPage(uuid: userId),
-      LoginStaffPage(),
+      Typerlogin(),
       EventScreen(), // <-- Aquí está corregido y definido como const si aplica
       InternationalEventScreen(eventoId: eventoId, userId: userId),
       PerfilPropioStaff(),
