@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'bienvenida.dart'; // Tu pantalla destino staff
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'bienvenida.dart';
 
 class LoginStaffPage extends StatefulWidget {
   const LoginStaffPage({super.key});
@@ -13,28 +14,34 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
   final TextEditingController passwordController = TextEditingController();
   String? error;
 
-  void login() {
+  Future<void> login() async {
     final matricula = matriculaController.text.trim();
     final password = passwordController.text.trim();
-
     setState(() => error = null);
 
     if (matricula.isEmpty || password.isEmpty) {
-      setState(() {
-        error = 'Por favor ingresa matrícula y contraseña';
-      });
+      setState(() => error = 'Por favor ingresa matrícula y contraseña');
       return;
     }
 
-    if (matricula == 'staff' && password == '1234') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const PantallaBienvenida()),
-      );
-    } else {
-      setState(() {
-        error = 'Matrícula o contraseña incorrectos';
-      });
+    try {
+      final response = await Supabase.instance.client
+          .from('organizadores')
+          .select()
+          .eq('matricula', matricula)
+          .eq('contrasena', password)
+          .maybeSingle();
+
+      if (response != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const PantallaBienvenida()),
+        );
+      } else {
+        setState(() => error = 'Matrícula o contraseña incorrectos');
+      }
+    } catch (e) {
+      setState(() => error = 'Error al conectarse a Supabase');
     }
   }
 
@@ -59,7 +66,8 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           children: [
-            const Text('ITEvent', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.indigo)),
+            const Text('ITEvent',
+                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.indigo)),
             const SizedBox(height: 40),
             Container(
               padding: const EdgeInsets.all(25),
@@ -106,7 +114,10 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: login,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, padding: const EdgeInsets.symmetric(vertical: 16)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: const Text('Iniciar Sesión', style: TextStyle(fontSize: 16)),
                     ),
                   ),
