@@ -4,7 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'main_navigator.dart';
 
 class PerfilUsuarioPage extends StatefulWidget {
-  const PerfilUsuarioPage({super.key});
+  final int userId;
+
+  const PerfilUsuarioPage({super.key, required this.userId});
 
   @override
   State<PerfilUsuarioPage> createState() => _PerfilUsuarioPageState();
@@ -13,207 +15,243 @@ class PerfilUsuarioPage extends StatefulWidget {
 class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
   final supabase = Supabase.instance.client;
 
-  Map<String, dynamic>? staffData;
-  bool _isLoading = true;
+  Map<String, dynamic>? user;
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    _cargarDatosStaff();
+    _loadUser();
   }
 
-  Future<void> _cargarDatosStaff() async {
-    setState(() => _isLoading = true);
-
-    final user = supabase.auth.currentUser;
-    if (user == null) {
-      // No hay usuario logueado
-      setState(() {
-        _isLoading = false;
-        staffData = null;
-      });
-      return;
-    }
-
+  Future<void> _loadUser() async {
     try {
-      // Supón que la tabla staff tiene un campo uuid_usuario que es el id de Supabase (string UUID)
-      final data = await supabase
-          .from('staff')
-          .select()
-          .eq('uuid_usuario', user.id)
-          .maybeSingle();
+      final data =
+          await supabase
+              .from('usuarios')
+              .select('''
+            id,
+            nombre,
+            apellido,
+            rol,
+            correo,
+            telefono,
+            foto_url
+          ''')
+              .eq('id', widget.userId)
+              .maybeSingle();
 
       setState(() {
-        staffData = data;
-        _isLoading = false;
+        user = data;
+        loading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar datos: $e')),
-      );
+      setState(() => loading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar usuario: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (staffData == null) {
-      return Scaffold(
-        body: Center(
-          child: Text(
-            'No se encontraron datos del usuario.',
-            style: TextStyle(fontSize: 18),
-          ),
-        ),
-      );
-    }
+    final fullName =
+        '${user?['nombre'] ?? ''} ${user?['apellido'] ?? ''}'.trim();
 
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF3B5998),
+        title: Text(
+          fullName.isEmpty ? 'Perfil' : fullName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body:
+          loading
+              ? const Center(child: CircularProgressIndicator())
+              : user == null
+              ? const Center(child: Text('Usuario no encontrado'))
+              : Column(
+                children: [
+                  // Cabecera azul
+                  Container(
+                    color: Colors.blue[900],
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: Text(
+                        fullName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Bloque gris con avatar y datos
+                  Container(
+                    color: Colors.grey[900],
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundColor: Colors.white,
+                          backgroundImage:
+                              (user?['foto_url'] != null &&
+                                      (user!['foto_url'] as String).isNotEmpty)
+                                  ? NetworkImage(user!['foto_url'])
+                                  : null,
+                          child:
+                              (user?['foto_url'] == null ||
+                                      (user!['foto_url'] as String).isEmpty)
+                                  ? const Icon(Icons.person, size: 40)
+                                  : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                fullName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                user?['rol'] ?? 'Sin rol',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              if ((user?['correo'] ?? '').toString().isNotEmpty)
+                                Text(
+                                  user!['correo'],
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              if ((user?['telefono'] ?? '')
+                                  .toString()
+                                  .isNotEmpty)
+                                Text(
+                                  'Tel: ${user!['telefono']}',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          children: const [
+                            Icon(Icons.mail_outline, color: Colors.white),
+                            SizedBox(height: 4),
+                            Text(
+                              'Mensaje',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Divider(height: 1),
+
+                  // Notas personales (placeholder)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Notas Personales',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text('Escribe Notas'),
+                      ],
+                    ),
+                  ),
+
+                  const Divider(height: 1),
+
+                  // Sección de contacto
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Contacto',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Mantente en contacto con $fullName intercambiando información de contacto',
+                        ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[900],
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                            onPressed: () {
+                              // Acción para intercambiar info
+                            },
+                            child: const Text(
+                              'Contactar información',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2, // asistentes
+        currentIndex: 2,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
-        onTap: (index) => navigateToPage(context, index),
+        onTap: (i) => navigateToPage(context, i),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Agenda',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group),
-            label: 'Asistentes',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Asistentes'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
             label: 'Notificación',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Container(
-            color: Colors.blue[900],
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: Text(
-                staffData?['nombre'] ?? 'Nombre no disponible',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontStyle: FontStyle.italic,
-                  fontSize: 18,
-                ),
-              ),
-            ),
-          ),
-          Container(
-            color: Colors.grey[900],
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  // Puedes cargar imagen real si tienes url en staffData['foto_url']
-                  // backgroundImage: NetworkImage(staffData?['foto_url'] ?? ''),
-                  child: const Icon(Icons.person, size: 40, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        staffData?['nombre'] ?? 'Nombre no disponible',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${staffData?['cargo'] ?? 'Cargo no disponible'}\n${staffData?['institucion'] ?? ''}\n${staffData?['ciudad'] ?? ''}',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  children: const [
-                    Icon(Icons.mail_outline, color: Colors.white),
-                    SizedBox(height: 4),
-                    Text(
-                      'Mensaje',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Notas Personales',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                Text(staffData?['notas_personales'] ?? 'Escribe Notas'),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Contacto',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Mantente en contacto con ${staffData?['nombre'] ?? 'el usuario'} intercambiando informacion de contacto',
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[900],
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    onPressed: () {
-                      // Acción para contactar al usuario
-                    },
-                    child: const Text(
-                      'Contactar informacion',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

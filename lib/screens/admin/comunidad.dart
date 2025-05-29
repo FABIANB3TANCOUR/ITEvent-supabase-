@@ -1,11 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_navigator.dart';
 import 'perfil.dart';
-import 'perfil_asistente.dart';
+import 'perfil_asistente.dart'; // Asegúrate de que acepte userId
 
-class ComunidadScreen extends StatelessWidget {
+class ComunidadScreen extends StatefulWidget {
   const ComunidadScreen({super.key});
+
+  @override
+  State<ComunidadScreen> createState() => _ComunidadScreenState();
+}
+
+class _ComunidadScreenState extends State<ComunidadScreen> {
+  final supabase = Supabase.instance.client;
+
+  Future<List<dynamic>> _fetchUsuarios() async {
+    return await supabase
+        .from('usuarios')
+        .select('id, nombre, apellido, rol')
+        .order('nombre');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,42 +28,19 @@ class ComunidadScreen extends StatelessWidget {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: const Color(0xFF3B5998),
-        leading: Stack(
-          alignment: Alignment.topRight,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PerfilScreen()),
-                );
-              },
-              child: Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.black12,
-                      child: Icon(Icons.person, color: Colors.white),
-                    ),
-                  ),
-                  Positioned(
-                    right: 6,
-                    top: 6,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
+        leading: GestureDetector(
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PerfilScreen()),
               ),
+          child: const Padding(
+            padding: EdgeInsets.all(8),
+            child: CircleAvatar(
+              backgroundColor: Colors.black12,
+              child: Icon(Icons.person, color: Colors.white),
             ),
-          ],
+          ),
         ),
         title: const Text(
           'Comunidad',
@@ -63,7 +55,7 @@ class ComunidadScreen extends StatelessWidget {
       body: Column(
         children: [
           const SizedBox(height: 10),
-          // Filtros
+          // Filtros (aún sin lógica, solo UI)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -74,59 +66,57 @@ class ComunidadScreen extends StatelessWidget {
                   label: const Text('Recomendado'),
                   onSelected: (_) {},
                 ),
-                FilterChip(label: const Text('Categoría'), onSelected: (_) {}),
+                FilterChip(label: const Text('Rol'), onSelected: (_) {}),
               ],
             ),
           ),
           const SizedBox(height: 10),
-          // Lista
           Expanded(
-            child: ListView(
-              children: const [
-                PersonaCard(
-                  name: 'David Arams',
-                  role: 'Administrador',
-                  location: 'Ensenada, B.C.',
-                  image: 'https://randomuser.me/api/portraits/men/32.jpg',
-                ),
-                PersonaCard(
-                  name: 'Jason Alexander',
-                  role: 'Conferencista',
-                  location: 'Ensenada, B.C.',
-                  image: 'https://randomuser.me/api/portraits/men/12.jpg',
-                ),
-                PersonaCard(
-                  name: 'Kathy Perez',
-                  role: 'Staff',
-                  location: 'Ensenada, B.C.',
-                  image: 'https://randomuser.me/api/portraits/women/44.jpg',
-                ),
-                PersonaCard(
-                  name: 'Roberto Gomez',
-                  role: 'Administrador',
-                  location: 'Ensenada, B.C.',
-                  image: 'https://randomuser.me/api/portraits/men/54.jpg',
-                ),
-              ],
+            child: FutureBuilder<List<dynamic>>(
+              future: _fetchUsuarios(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error.toString()}'),
+                  );
+                }
+                final usuarios = snapshot.data ?? [];
+                if (usuarios.isEmpty) {
+                  return const Center(child: Text('No hay usuarios.'));
+                }
+                return ListView.builder(
+                  itemCount: usuarios.length,
+                  itemBuilder: (context, index) {
+                    final u = usuarios[index];
+                    final String nombreCompleto =
+                        '${u['nombre'] ?? ''} ${u['apellido'] ?? ''}';
+                    return _PersonaCard(
+                      name: nombreCompleto.trim(),
+                      role: u['rol'] ?? 'Sin rol',
+                      userId: u['id'] as int,
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2, // asistentes
+        currentIndex: 2,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
-        onTap: (index) => navigateToPage(context, index),
+        onTap: (i) => navigateToPage(context, i),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Agenda',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group),
-            label: 'Aasistentes',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Asistentes'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
@@ -138,18 +128,15 @@ class ComunidadScreen extends StatelessWidget {
   }
 }
 
-class PersonaCard extends StatelessWidget {
+class _PersonaCard extends StatelessWidget {
   final String name;
   final String role;
-  final String location;
-  final String image;
+  final int userId;
 
-  const PersonaCard({
-    super.key,
+  const _PersonaCard({
     required this.name,
     required this.role,
-    required this.location,
-    required this.image,
+    required this.userId,
   });
 
   @override
@@ -157,17 +144,23 @@ class PersonaCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
-        leading: CircleAvatar(backgroundImage: NetworkImage(image), radius: 25),
+        leading: CircleAvatar(
+          backgroundColor: Colors.indigo,
+          child: Text(
+            name.isNotEmpty ? name[0] : '?',
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('$role\n$location'),
-        isThreeLine: true,
+        subtitle: Text(role),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PerfilUsuarioPage()),
-          );
-        },
+        onTap:
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PerfilUsuarioPage(userId: userId),
+              ),
+            ),
       ),
     );
   }
