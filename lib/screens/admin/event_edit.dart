@@ -17,6 +17,11 @@ class _EditEventScreenState extends State<EditEventScreen> {
   final _descripcionController = TextEditingController();
   final _cupoController = TextEditingController();
   final _logoUrlController = TextEditingController();
+  final _portadaUrlController = TextEditingController();
+  final _estadoController = TextEditingController();
+  final _municipioController = TextEditingController();
+  List<dynamic> _organizadores = [];
+  int? _organizadorSeleccionado;
 
   DateTime? _fechaInicio;
   DateTime? _fechaFin;
@@ -37,14 +42,24 @@ class _EditEventScreenState extends State<EditEventScreen> {
               .eq('id', widget.eventId)
               .maybeSingle();
 
+      final organizadoresData = await supabase
+          .from('organizadores')
+          .select('id, nombre');
+
       if (data != null) {
         _nombreController.text = data['nombre_evento'] ?? '';
         _descripcionController.text = data['descripcion'] ?? '';
         _cupoController.text = (data['cupo_total'] ?? '').toString();
         _logoUrlController.text = data['logo_url'] ?? '';
+        _portadaUrlController.text = data['portada_url'] ?? '';
+        _estadoController.text = data['estado'] ?? '';
+        _municipioController.text = data['municipio'] ?? '';
+        _organizadorSeleccionado = data['organizador_id'];
         _fechaInicio = DateTime.tryParse(data['fecha_inicio'] ?? '');
         _fechaFin = DateTime.tryParse(data['fecha_fin'] ?? '');
       }
+
+      _organizadores = organizadoresData;
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -70,8 +85,12 @@ class _EditEventScreenState extends State<EditEventScreen> {
             'descripcion': _descripcionController.text,
             'cupo_total': int.tryParse(_cupoController.text) ?? 0,
             'logo_url': _logoUrlController.text,
+            'portada_url': _portadaUrlController.text,
             'fecha_inicio': _fechaInicio!.toIso8601String(),
             'fecha_fin': _fechaFin!.toIso8601String(),
+            'estado': _estadoController.text,
+            'municipio': _municipioController.text,
+            'organizador_id': _organizadorSeleccionado,
           })
           .eq('id', widget.eventId);
 
@@ -110,6 +129,41 @@ class _EditEventScreenState extends State<EditEventScreen> {
     }
   }
 
+  Widget _buildDatePicker(String label, bool isInicio) {
+    final selectedDate = isInicio ? _fechaInicio : _fechaFin;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: InkWell(
+              onTap: () => _pickDate(isInicio: isInicio),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E0E0),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  selectedDate != null
+                      ? '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}'
+                      : 'Seleccionar fecha',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTextField(
     String label,
     TextEditingController controller, {
@@ -131,95 +185,191 @@ class _EditEventScreenState extends State<EditEventScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B5998),
         title: const Text(
-          'Editar Evento',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          'Modificar datos',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        backgroundColor: const Color(0xFF3966CC),
         centerTitle: true,
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Padding(
-                padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildTextField('Nombre del evento', _nombreController),
-                      _buildTextField(
-                        'Descripción',
-                        _descripcionController,
-                        maxLines: 4,
-                      ),
-                      _buildTextField(
-                        'Cupo total',
-                        _cupoController,
-                        type: TextInputType.number,
-                      ),
-                      _buildTextField('Logo URL', _logoUrlController),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF162A87), Colors.white],
+          ),
+        ),
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        width: 400,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Agregar imagen o logo:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _logoUrlController,
+                              onChanged: (_) => setState(() {}),
+                              decoration: const InputDecoration(
+                                labelText: 'URL del logo',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            if (_logoUrlController.text.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Center(
+                                  child: Image.network(
+                                    _logoUrlController.text,
+                                    height: 80,
+                                    errorBuilder:
+                                        (_, __, ___) => const Text(
+                                          'No se pudo cargar la imagen',
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Agregar imagen de portada:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _portadaUrlController,
+                              onChanged: (_) => setState(() {}),
+                              decoration: const InputDecoration(
+                                labelText: 'URL de portada',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            if (_portadaUrlController.text.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Center(
+                                  child: Image.network(
+                                    _portadaUrlController.text,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (_, __, ___) => const Text(
+                                          'No se pudo cargar la portada',
+                                        ),
+                                  ),
+                                ),
+                              ),
 
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          const Icon(Icons.date_range),
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed: () => _pickDate(isInicio: true),
-                            child: Text(
-                              _fechaInicio == null
-                                  ? 'Seleccionar fecha de inicio'
-                                  : 'Inicio: ${_fechaInicio!.toLocal()}'.split(
-                                    ' ',
-                                  )[0],
+                            const SizedBox(height: 10),
+                            _buildTextField(
+                              'Nombre del evento',
+                              _nombreController,
                             ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Icon(Icons.date_range),
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed: () => _pickDate(isInicio: false),
-                            child: Text(
-                              _fechaFin == null
-                                  ? 'Seleccionar fecha de fin'
-                                  : 'Fin: ${_fechaFin!.toLocal()}'.split(
-                                    ' ',
-                                  )[0],
+                            _buildDatePicker('Fecha de inicio', true),
+                            _buildDatePicker('Fecha de termino', false),
+                            _buildTextField(
+                              'Capacidad',
+                              _cupoController,
+                              type: TextInputType.number,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
-                      ElevatedButton(
-                        onPressed: _updateEvent,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3966CC),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 40,
-                            vertical: 12,
-                          ),
+                            _buildTextField(
+                              'Descripción',
+                              _descripcionController,
+                              maxLines: 3,
+                            ),
+                            _buildTextField('Estado', _estadoController),
+                            _buildTextField('Municipio', _municipioController),
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Organizador:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            DropdownButton<int>(
+                              isExpanded: true,
+                              value: _organizadorSeleccionado,
+                              hint: const Text('Selecciona un organizador'),
+                              items:
+                                  _organizadores
+                                      .map<DropdownMenuItem<int>>(
+                                        (org) => DropdownMenuItem(
+                                          value: org['id'],
+                                          child: Text(org['nombre']),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  _organizadorSeleccionado = value;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: _updateEvent,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF3966CC),
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Actualizar',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Center(
+                              child: TextButton(
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Colors.amber,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text(
+                                  'Volver',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: const Text(
-                          'Guardar Cambios',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+      ),
     );
   }
 
@@ -229,6 +379,7 @@ class _EditEventScreenState extends State<EditEventScreen> {
     _descripcionController.dispose();
     _cupoController.dispose();
     _logoUrlController.dispose();
+    _portadaUrlController.dispose();
     super.dispose();
   }
 }

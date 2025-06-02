@@ -17,6 +17,7 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
 
   Map<String, dynamic>? event;
   bool _isLoading = true;
+  String localidad = '';
 
   @override
   void initState() {
@@ -39,6 +40,8 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
             portada_url,
             created_at,
             descripcion,
+            estado,
+            municipio,
             organizadores (
               nombre
             )
@@ -50,6 +53,11 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
         event = data;
         _isLoading = false;
       });
+      if (event!['municipio'] != null && event!['estado'] != null) {
+        localidad = '${event!['municipio']}, ${event!['estado']}';
+      } else {
+        localidad = 'Ubicacion no disponible';
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(
@@ -143,10 +151,12 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
                           ),
                         ),
                         const SizedBox(height: 6),
+
                         Text(
-                          'Ensenada, Baja California',
+                          localidad,
                           style: TextStyle(color: Colors.grey[700]),
                         ),
+
                         Text(
                           _formatearFecha(event!['fecha_fin']),
                           style: const TextStyle(
@@ -215,28 +225,6 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
               ),
     );
   }
-
-  // Widget _botonAccion(
-  //   String texto,
-  //   Color color,
-  //   VoidCallback onPressed, {
-  //   Color colorTexto = Colors.white,
-  // }) {
-  //   return Center(
-  //     child: ElevatedButton(
-  //       style: ElevatedButton.styleFrom(
-  //         backgroundColor: color,
-  //         foregroundColor: colorTexto,
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(10),
-  //         ),
-  //         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-  //       ),
-  //       onPressed: onPressed,
-  //       child: Text(texto),
-  //     ),
-  //   );
-  // }
 
   String _formatearFecha(String fechaISO) {
     try {
