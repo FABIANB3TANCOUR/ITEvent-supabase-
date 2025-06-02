@@ -103,6 +103,16 @@ class _EventScreenState extends State<EventScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      leading:
+                          evento['logo_url'] != null &&
+                                  evento['logo_url'].toString().isNotEmpty
+                              ? Image.network(
+                                evento['logo_url'],
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.contain,
+                              )
+                              : null,
                       title: Text(
                         evento['nombre_evento'] ?? 'Sin nombre',
                         style: const TextStyle(fontWeight: FontWeight.w600),

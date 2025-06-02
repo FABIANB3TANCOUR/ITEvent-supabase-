@@ -1,4 +1,4 @@
-#Wed May 28 18:19:55 PDT 2025
+#Mon Jun 02 14:49:27 PDT 2025
 base.0=C\:\\Users\\rdfh1\\Documents\\DB\\ITEvent-supabase-\\build\\app\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
 base.1=C\:\\Users\\rdfh1\\Documents\\DB\\ITEvent-supabase-\\build\\app\\intermediates\\dex\\debug\\mergeLibDexDebug\\0\\classes.dex
 base.2=C\:\\Users\\rdfh1\\Documents\\DB\\ITEvent-supabase-\\build\\app\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
