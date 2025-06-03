@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:itevent/screens/admin/chat.dart';
+import 'package:itevent/screens/users/chat.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

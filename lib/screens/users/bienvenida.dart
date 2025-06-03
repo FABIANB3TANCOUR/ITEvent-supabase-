@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:itevent/screens/users/main.dart';
 
 class PantallaBienvenida extends StatelessWidget {
   const PantallaBienvenida({super.key});
@@ -61,7 +62,10 @@ class PantallaBienvenida extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 // Aquí navegas a la siguiente pantalla
-                // Navigator.push(context, MaterialPageRoute(builder: (_) => OtraPantalla()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => EventScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFF002f86),

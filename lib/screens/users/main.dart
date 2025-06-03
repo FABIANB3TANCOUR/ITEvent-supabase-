@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:itevent/screens/users/eventos.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -111,6 +112,32 @@ class _EventScreenState extends State<EventScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => EventosScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 14,
+                        ),
+                      ),
+                      child: const Text(
+                        'Agregar evento',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               )
@@ -160,6 +187,19 @@ class _EventScreenState extends State<EventScreen> {
                   },
                 ),
               ),
+      floatingActionButton:
+          eventos.isNotEmpty
+              ? FloatingActionButton(
+                backgroundColor: Colors.indigo,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EventosScreen()),
+                  );
+                },
+                child: const Icon(Icons.add, color: Colors.white),
+              )
+              : null,
 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,

@@ -6,14 +6,14 @@ import 'event_detail.dart';
 import 'main_navigator.dart';
 import 'perfil.dart';
 
-class EventScreen extends StatefulWidget {
-  const EventScreen({super.key});
+class EventosScreen extends StatefulWidget {
+  const EventosScreen({super.key});
 
   @override
-  State<EventScreen> createState() => _EventScreenState();
+  State<EventosScreen> createState() => _EventosScreenState();
 }
 
-class _EventScreenState extends State<EventScreen> {
+class _EventosScreenState extends State<EventosScreen> {
   /// Cliente de Supabase
   final supabase = Supabase.instance.client;
 
@@ -38,23 +38,37 @@ class _EventScreenState extends State<EventScreen> {
       final matricula = prefs.getInt('matricula');
       if (matricula == null) throw Exception('Matrícula no encontrada');
 
-      // Subconsulta para obtener solo los eventos en los que NO está registrado
+      // Obtener registros de eventos donde el usuario está registrado
+      final registros = await supabase
+          .from('registros')
+          .select('id_evento')
+          .eq('matricula', matricula);
+
+      // Extraer IDs de eventos registrados
+      final List<int> idsRegistrados =
+          registros
+              .map((r) => r['id_evento'])
+              .where((id) => id != null)
+              .map<int>((id) => id as int)
+              .toList();
+
+      // Cargar todos los eventos
       final data = await supabase
           .from('eventos')
           .select()
-          .not(
-            'id',
-            'in',
-            Supabase.instance.client
-                .from('registros')
-                .select('id_evento')
-                .eq('matricula', matricula),
-          )
           .order('fecha_inicio');
+
+      // Si no hay registros, mostrar todos los eventos
+      final eventosFiltrados =
+          idsRegistrados.isEmpty
+              ? data
+              : data
+                  .where((evento) => !idsRegistrados.contains(evento['id']))
+                  .toList();
 
       if (mounted) {
         setState(() {
-          eventos = data;
+          eventos = eventosFiltrados;
           isLoading = false;
         });
       }

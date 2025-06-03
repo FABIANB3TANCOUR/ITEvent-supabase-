@@ -17,6 +17,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   final _telefonoController = TextEditingController();
   final _fotoUrlController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _notaController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -44,6 +45,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       _correoController.text = data['correo'] ?? '';
       _telefonoController.text = data['telefono'] ?? '';
       _fotoUrlController.text = data['foto_url'] ?? '';
+      _notaController.text = data['nota'] ?? '';
     }
   }
 
@@ -61,13 +63,17 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         'correo': _correoController.text.trim(),
         'telefono': _telefonoController.text.trim(),
         'foto_url': _fotoUrlController.text.trim(),
+        'nota': _notaController.text.trim(),
       };
 
       if (_passwordController.text.trim().isNotEmpty) {
         updateData['password'] = _passwordController.text.trim();
       }
 
-      await supabase.from('user').update(updateData).eq('matricula', matricula);
+      await supabase
+          .from('usuarios')
+          .update(updateData)
+          .eq('matricula', matricula);
 
       if (mounted) {
         ScaffoldMessenger.of(
@@ -138,6 +144,22 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                           _buildTextField('Apellido', _apellidoController),
                           _buildTextField('Correo', _correoController),
                           _buildTextField('Telefono', _telefonoController),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: TextField(
+                              controller: _notaController,
+                              maxLength: 150,
+                              maxLines: null, // Permite varias líneas
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(
+                                labelText:
+                                    'Nota. (puedes agregar una pequeña presentación de ti)',
+                                border: OutlineInputBorder(),
+                                alignLabelWithHint: true,
+                              ),
+                            ),
+                          ),
+
                           _buildTextField(
                             'Nueva Contraseña (opcional)',
                             _passwordController,
@@ -200,6 +222,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     _telefonoController.dispose();
     _fotoUrlController.dispose();
     _passwordController.dispose();
+    _notaController.dispose();
     super.dispose();
   }
 }

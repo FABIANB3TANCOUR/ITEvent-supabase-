@@ -31,8 +31,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final data =
         await supabase
             .from('usuarios')
-            .select('id, nombre, apellido, telefono, correo, foto_url')
-            .eq('id', matricula)
+            .select(
+              'matricula, nombre, apellido, telefono, correo, foto_url, nota',
+            )
+            .eq('matricula', matricula)
             .maybeSingle();
 
     setState(() {
@@ -124,7 +126,23 @@ class _PerfilScreenState extends State<PerfilScreen> {
                           userData!['correo'] ?? '',
                           style: const TextStyle(fontSize: 16),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 20),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Tus notas:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          userData!['nota'] ?? 'Sin nota',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 20),
                         ElevatedButton.icon(
                           onPressed: () {
                             Navigator.push(
