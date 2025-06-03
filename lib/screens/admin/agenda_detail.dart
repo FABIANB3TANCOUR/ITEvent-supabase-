@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:itevent/screens/admin/actividad.dart';
 import 'package:itevent/screens/admin/main_navigator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -224,8 +225,17 @@ class _AgendaEventoScreenState extends State<AgendaEventoScreen> {
                                     ),
                                   InkWell(
                                     onTap: () {
-                                      // TODO: Navegar a detalle de la actividad
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => DetalleActividadScreen(
+                                                idActividad: actividad['id'],
+                                              ),
+                                        ),
+                                      );
                                     },
+
                                     child: Container(
                                       width:
                                           double
