@@ -32,28 +32,29 @@ class _EventScreenState extends State<EventScreen> {
   /// Obtiene todos los eventos ordenados por fecha de inicio
   Future<void> _cargarEventos() async {
     setState(() => isLoading = true);
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final matricula = prefs.getInt('matricula');
+      if (matricula == null) throw Exception('Matrícula no encontrada');
 
-      if (matricula == null) {
-        throw Exception('No se encontró la matrícula del usuario.');
-      }
-
+      // Subconsulta para obtener solo los eventos en los que NO está registrado
       final data = await supabase
-          .from('registros')
-          .select('eventos(*)') // JOIN con eventos
-          .eq('matricula', matricula);
-
-      final eventosRegistrados =
-          data
-              .where((row) => row['eventos'] != null)
-              .map((row) => row['eventos'])
-              .toList();
+          .from('eventos')
+          .select()
+          .not(
+            'id',
+            'in',
+            Supabase.instance.client
+                .from('registros')
+                .select('id_evento')
+                .eq('matricula', matricula),
+          )
+          .order('fecha_inicio');
 
       if (mounted) {
         setState(() {
-          eventos = eventosRegistrados;
+          eventos = data;
           isLoading = false;
         });
       }

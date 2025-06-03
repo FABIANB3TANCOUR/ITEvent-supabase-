@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'event_detail.dart';
+import 'agenda_detail.dart';
 import 'main_navigator.dart';
 import 'perfil.dart';
 
-class EventScreen extends StatefulWidget {
-  const EventScreen({super.key});
+class AgendaUsuario extends StatefulWidget {
+  const AgendaUsuario({super.key});
 
   @override
-  State<EventScreen> createState() => _EventScreenState();
+  State<AgendaUsuario> createState() => _AgendaUsuarioState();
 }
 
-class _EventScreenState extends State<EventScreen> {
+class _AgendaUsuarioState extends State<AgendaUsuario> {
   /// Cliente de Supabase
   final supabase = Supabase.instance.client;
 
@@ -88,7 +88,7 @@ class _EventScreenState extends State<EventScreen> {
           ),
         ),
         title: const Text(
-          'Eventos',
+          'Agenda de Eventos',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontStyle: FontStyle.italic,
@@ -106,11 +106,10 @@ class _EventScreenState extends State<EventScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      'Por el momento no cuentas con\nningun evento.\nEspera a que existan mas eventos',
+                      'Por el momento no cuentas con\nningun evento.\nExplora más eventos',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 24),
                   ],
                 ),
               )
@@ -152,7 +151,8 @@ class _EventScreenState extends State<EventScreen> {
                           context,
                           MaterialPageRoute(
                             builder:
-                                (_) => EventDetailUser(eventId: evento['id']),
+                                (_) =>
+                                    AgendaEventoScreen(idEvento: evento['id']),
                           ),
                         );
                       },
@@ -162,7 +162,7 @@ class _EventScreenState extends State<EventScreen> {
               ),
 
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
+        currentIndex: 1,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
         onTap: (index) => navigateToPage(context, index),
