@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:itevent/screens/users/bienvenida.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'bienvenida.dart';
 
 class LoginStaffPage extends StatefulWidget {
-  const LoginStaffPage({super.key});
+  const LoginStaffPage({Key? key}) : super(key: key);
 
   @override
   State<LoginStaffPage> createState() => _LoginStaffPageState();
@@ -12,28 +13,43 @@ class LoginStaffPage extends StatefulWidget {
 class _LoginStaffPageState extends State<LoginStaffPage> {
   final TextEditingController matriculaController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
   String? error;
+  bool loading = false;
 
   Future<void> login() async {
     final matricula = matriculaController.text.trim();
     final password = passwordController.text.trim();
-    setState(() => error = null);
+
+    setState(() {
+      error = null;
+      loading = true;
+    });
 
     if (matricula.isEmpty || password.isEmpty) {
-      setState(() => error = 'Por favor ingresa matrícula y contraseña');
+      setState(() {
+        error = 'Por favor ingresa matrícula y contraseña';
+        loading = false;
+      });
       return;
     }
 
     try {
-      final response = await Supabase.instance.client
-          .from('organizadores')
-          .select()
-          .eq('matricula', matricula)
-          .eq('contrasena', password)
-          .maybeSingle();
+      final user =
+          await Supabase.instance.client
+              .from('usuarios')
+              .select()
+              .eq('matricula', matricula)
+              .eq('password', password) // ➜ Usa hashing o Auth en producción
+              .maybeSingle();
 
-      if (response != null) {
-        Navigator.pushReplacement(
+      if (user != null) {
+        if (!mounted) return;
+        final matricula = user['matricula'] as int; // <- tu consulta previa
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.setInt('matricula', matricula);
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const PantallaBienvenida()),
         );
@@ -41,7 +57,9 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
         setState(() => error = 'Matrícula o contraseña incorrectos');
       }
     } catch (e) {
-      setState(() => error = 'Error al conectarse a Supabase');
+      setState(() => error = 'Error al conectarse a la base de datos');
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
   }
 
@@ -55,8 +73,38 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login Staff')),
-      body: _loginForm(),
+      appBar: AppBar(
+        title: const Text(
+          'Login Staff',
+          style: TextStyle(
+            color: Color.fromARGB(255, 204, 204, 204),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: Material(
+          color: Colors.transparent, // Para que respete el fondo del AppBar
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => Navigator.pop(context),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(Icons.arrow_back, color: Colors.white),
+            ),
+          ),
+        ),
+
+        backgroundColor: Color(0xFF162A87),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF162A87), Colors.white],
+          ),
+        ),
+        child: _loginForm(),
+      ),
     );
   }
 
@@ -66,20 +114,50 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           children: [
-            const Text('ITEvent',
-                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.indigo)),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'ITE',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.yellow[700],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'vent',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo[900],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 40),
             Container(
               padding: const EdgeInsets.all(25),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('No. Matrícula', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const Text(
+                    'No. Matrícula',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: matriculaController,
@@ -87,12 +165,19 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
                       hintText: 'Ingrese aquí',
                       filled: true,
                       fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 15),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Contraseña', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const Text(
+                    'Contraseña',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: passwordController,
@@ -101,8 +186,12 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
                       hintText: 'Ingrese aquí',
                       filled: true,
                       fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 15),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                      ),
                     ),
                   ),
                   if (error != null) ...[
@@ -113,12 +202,27 @@ class _LoginStaffPageState extends State<LoginStaffPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: login,
+                      onPressed: loading ? null : login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.indigo,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text('Iniciar Sesión', style: TextStyle(fontSize: 16)),
+                      child:
+                          loading
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Text(
+                                'Iniciar Sesión',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
                     ),
                   ),
                 ],
