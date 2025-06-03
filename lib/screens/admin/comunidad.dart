@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:itevent/screens/admin/asistente_nuevo.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_navigator.dart';
@@ -18,7 +19,7 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
   Future<List<dynamic>> _fetchUsuarios() async {
     return await supabase
         .from('usuarios')
-        .select('id, nombre, apellido, rol')
+        .select('matricula, nombre, apellido, roles(nombre)')
         .order('nombre');
   }
 
@@ -95,8 +96,8 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
                         '${u['nombre'] ?? ''} ${u['apellido'] ?? ''}';
                     return _PersonaCard(
                       name: nombreCompleto.trim(),
-                      role: u['rol'] ?? 'Sin rol',
-                      userId: u['id'] as int,
+                      role: u['roles']?['nombre'] ?? 'Sin rol',
+                      matricula: u['matricula'] as int,
                     );
                   },
                 );
@@ -104,6 +105,16 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.indigo,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NuevoUsuarioScreen()),
+          );
+        },
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2,
@@ -131,12 +142,12 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
 class _PersonaCard extends StatelessWidget {
   final String name;
   final String role;
-  final int userId;
+  final int matricula;
 
   const _PersonaCard({
     required this.name,
     required this.role,
-    required this.userId,
+    required this.matricula,
   });
 
   @override
@@ -158,7 +169,7 @@ class _PersonaCard extends StatelessWidget {
             () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => PerfilUsuarioPage(userId: userId),
+                builder: (_) => PerfilUsuarioPage(matricula: matricula),
               ),
             ),
       ),

@@ -180,7 +180,7 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
           'Agregar evento',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF3966CC),
+        backgroundColor: Colors.blue,
         centerTitle: true,
       ),
       body: Container(

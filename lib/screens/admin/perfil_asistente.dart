@@ -4,9 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'main_navigator.dart';
 
 class PerfilUsuarioPage extends StatefulWidget {
-  final int userId;
+  final int matricula;
 
-  const PerfilUsuarioPage({super.key, required this.userId});
+  const PerfilUsuarioPage({super.key, required this.matricula});
 
   @override
   State<PerfilUsuarioPage> createState() => _PerfilUsuarioPageState();
@@ -38,7 +38,7 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
             telefono,
             foto_url
           ''')
-              .eq('id', widget.userId)
+              .eq('id', widget.matricula)
               .maybeSingle();
 
       setState(() {

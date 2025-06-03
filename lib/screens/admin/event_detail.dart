@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:itevent/screens/admin/agenda_detail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'event_edit.dart';
@@ -108,7 +109,7 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B5998),
+        backgroundColor: Colors.blue,
         title: const Text(
           'Eventos',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -209,16 +210,18 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
                             ),
                           );
                         }),
-                        _actionButton(
-                          'Agregar conferencias',
-                          Colors.blue,
-                          () {},
-                        ),
-                        _actionButton(
-                          'Modificar conferencias',
-                          Colors.blue,
-                          () {},
-                        ),
+                        _actionButton('Ver actividades', Colors.blue, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => AgendaEventoScreen(
+                                    idEvento: widget.eventId,
+                                  ),
+                            ),
+                          );
+                        }),
+
                         _actionButton(
                           'Eliminar Evento',
                           Colors.orange,
