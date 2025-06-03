@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // ← NUEVO
 
 import 'screens/type_logins.dart';
@@ -12,7 +13,7 @@ void main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzaWVwemd1dHdzbWJlZnR5cmRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg0MTUxMDQsImV4cCI6MjA2Mzk5MTEwNH0.5UxlIN7IueevK82QoWly1MoGil1kRSU8cFoygVns-T8', // ← CAMBIA ESTO
   );
-
+  await initializeDateFormatting('es', null);
   runApp(const ITEventApp());
 }
 
