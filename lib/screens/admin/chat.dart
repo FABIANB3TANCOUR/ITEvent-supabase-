@@ -184,7 +184,7 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_nombresUsuarios[idOtro] ?? 'Chat'),
-        backgroundColor: const Color(0xFF3966CC),
+        backgroundColor: Colors.blue,
       ),
       body: Column(
         children: [

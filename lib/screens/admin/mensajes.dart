@@ -1,52 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:itevent/screens/admin/chat.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_navigator.dart';
 import 'perfil.dart';
 
-class MensajesScreen extends StatelessWidget {
+class MensajesScreen extends StatefulWidget {
   const MensajesScreen({super.key});
 
   @override
+  State<MensajesScreen> createState() => _MensajesScreenState();
+}
+
+class _MensajesScreenState extends State<MensajesScreen> {
+  final supabase = Supabase.instance.client;
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _usuarios = [];
+  String _filtroBusqueda = '';
+  int? adminId;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdminIdYUsuarios();
+  }
+
+  Future<void> _loadAdminIdYUsuarios() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('adminId');
+
+    if (id == null) {
+      setState(() {
+        loading = false;
+      });
+      return;
+    }
+
+    adminId = id;
+
+    final data = await supabase
+        .from('usuarios')
+        .select('matricula, nombre, apellido, roles(nombre), foto_url')
+        .order('nombre');
+
+    setState(() {
+      _usuarios = List<Map<String, dynamic>>.from(data);
+      loading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final usuariosFiltrados =
+        _usuarios.where((usuario) {
+          final nombre = usuario['nombre']?.toLowerCase() ?? '';
+          final apellido = usuario['apellido']?.toLowerCase() ?? '';
+          return nombre.contains(_filtroBusqueda) ||
+              apellido.contains(_filtroBusqueda);
+        }).toList();
+
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        leading: Stack(
-          alignment: Alignment.topRight,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PerfilScreen()),
-                );
-              },
-              child: Stack(
-                alignment: Alignment.topRight,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.black12,
-                      child: Icon(Icons.person, color: Colors.white),
-                    ),
-                  ),
-                  Positioned(
-                    right: 6,
-                    top: 6,
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
+        leading: GestureDetector(
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PerfilScreen()),
               ),
+          child: const Padding(
+            padding: EdgeInsets.all(8),
+            child: CircleAvatar(
+              backgroundColor: Colors.black12,
+              child: Icon(Icons.person, color: Colors.white),
             ),
-          ],
+          ),
         ),
         title: const Text(
           'Mensajes',
@@ -58,73 +89,69 @@ class MensajesScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // Lista de mensajes
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(8.0),
-              children: const [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: ChatBubble(text: 'Hola, ¿cómo estás?', isMe: false),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ChatBubble(text: '¡Todo bien! ¿Y tú?', isMe: true),
-                ),
-                // Puedes agregar más mensajes aquí
-              ],
-            ),
-          ),
-          // Campo de entrada
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Escribe un mensaje...',
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                        borderSide: BorderSide.none,
+      body:
+          loading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por nombre o apellido',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                      ),
+                      onChanged: (valor) {
+                        setState(() {
+                          _filtroBusqueda = valor.toLowerCase();
+                        });
+                      },
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.blue),
-                  onPressed: () {
-                    // Aquí va la lógica para enviar el mensaje
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child:
+                        usuariosFiltrados.isEmpty
+                            ? const Center(
+                              child: Text('No se encontraron usuarios'),
+                            )
+                            : ListView.builder(
+                              itemCount: usuariosFiltrados.length,
+                              itemBuilder: (context, index) {
+                                final usuario = usuariosFiltrados[index];
+                                return _PersonaCard(
+                                  name:
+                                      '${usuario['nombre']} ${usuario['apellido']}',
+                                  role: usuario['roles']['nombre'],
+                                  matricula: usuario['matricula'],
+                                  imgur: usuario['foto_url'],
+                                  adminId: adminId!,
+                                );
+                              },
+                            ),
+                  ),
+                ],
+              ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 3, // asistentes
+        currentIndex: 3,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
-        onTap: (index) => navigateToPage(context, index),
+        onTap: (i) => navigateToPage(context, i),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Agenda',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group),
-            label: 'Aasistentes',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Asistentes'),
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
@@ -136,22 +163,50 @@ class MensajesScreen extends StatelessWidget {
   }
 }
 
-class ChatBubble extends StatelessWidget {
-  final String text;
-  final bool isMe;
+class _PersonaCard extends StatelessWidget {
+  final String name;
+  final String role;
+  final int matricula;
+  final String? imgur;
+  final int adminId;
 
-  const ChatBubble({super.key, required this.text, required this.isMe});
+  const _PersonaCard({
+    required this.name,
+    required this.role,
+    required this.matricula,
+    this.imgur,
+    required this.adminId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: isMe ? Colors.blue[100] : Colors.grey[300],
-        borderRadius: BorderRadius.circular(12.0),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: ListTile(
+        leading: CircleAvatar(
+          radius: 40,
+          backgroundImage:
+              (imgur != null && imgur!.isNotEmpty)
+                  ? NetworkImage(imgur!)
+                  : null,
+          child:
+              (imgur == null || imgur!.isEmpty)
+                  ? const Icon(Icons.person, size: 40)
+                  : null,
+        ),
+        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(role),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) => ChatPage(adminId: adminId, destinatarioId: matricula),
+            ),
+          );
+        },
       ),
-      child: Text(text),
     );
   }
 }

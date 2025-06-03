@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_navigator.dart';
 import 'perfil.dart';
-import 'perfil_asistente.dart'; // Asegúrate de que acepte userId
+import 'perfil_asistente.dart';
 
 class ComunidadScreen extends StatefulWidget {
   const ComunidadScreen({super.key});
@@ -15,16 +15,37 @@ class ComunidadScreen extends StatefulWidget {
 
 class _ComunidadScreenState extends State<ComunidadScreen> {
   final supabase = Supabase.instance.client;
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _usuarios = [];
+  String _filtroRol = '';
+  bool loading = true;
 
-  Future<List<dynamic>> _fetchUsuarios() async {
-    return await supabase
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsuarios();
+  }
+
+  Future<void> _fetchUsuarios() async {
+    final data = await supabase
         .from('usuarios')
-        .select('matricula, nombre, apellido, roles(nombre)')
+        .select('matricula, nombre, apellido, roles(nombre), foto_url')
         .order('nombre');
+
+    setState(() {
+      _usuarios = List<Map<String, dynamic>>.from(data);
+      loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final usuariosFiltrados =
+        _usuarios.where((usuario) {
+          final rol = usuario['roles']?['nombre']?.toLowerCase() ?? '';
+          return rol.contains(_filtroRol.toLowerCase());
+        }).toList();
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -53,60 +74,70 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 10),
-          // Filtros (aún sin lógica, solo UI)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                FilterChip(label: const Text('Todo'), onSelected: (_) {}),
-                FilterChip(
-                  label: const Text('Recomendado'),
-                  onSelected: (_) {},
-                ),
-                FilterChip(label: const Text('Rol'), onSelected: (_) {}),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: FutureBuilder<List<dynamic>>(
-              future: _fetchUsuarios(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Error: ${snapshot.error.toString()}'),
-                  );
-                }
-                final usuarios = snapshot.data ?? [];
-                if (usuarios.isEmpty) {
-                  return const Center(child: Text('No hay usuarios.'));
-                }
-                return ListView.builder(
-                  itemCount: usuarios.length,
-                  itemBuilder: (context, index) {
-                    final u = usuarios[index];
-                    final String nombreCompleto =
-                        '${u['nombre'] ?? ''} ${u['apellido'] ?? ''}';
-                    return _PersonaCard(
-                      name: nombreCompleto.trim(),
-                      role: u['roles']?['nombre'] ?? 'Sin rol',
-                      matricula: u['matricula'] as int,
-                      imgur: u['foto_url'],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+      body:
+          loading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por rol (ej. alumno, docente)',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon:
+                            _filtroRol.isNotEmpty
+                                ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {
+                                      _filtroRol = '';
+                                    });
+                                  },
+                                )
+                                : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onChanged: (valor) {
+                        setState(() {
+                          _filtroRol = valor;
+                        });
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child:
+                        usuariosFiltrados.isEmpty
+                            ? const Center(
+                              child: Text(
+                                'No se encontraron usuarios con ese rol.',
+                              ),
+                            )
+                            : ListView.builder(
+                              itemCount: usuariosFiltrados.length,
+                              itemBuilder: (context, index) {
+                                final u = usuariosFiltrados[index];
+                                final String nombreCompleto =
+                                    '${u['nombre'] ?? ''} ${u['apellido'] ?? ''}';
+                                return _PersonaCard(
+                                  name: nombreCompleto.trim(),
+                                  role: u['roles']?['nombre'] ?? 'Sin rol',
+                                  matricula: u['matricula'],
+                                  imgur: u['foto_url'],
+                                );
+                              },
+                            ),
+                  ),
+                ],
+              ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.indigo,
         onPressed: () {
@@ -144,13 +175,13 @@ class _PersonaCard extends StatelessWidget {
   final String name;
   final String role;
   final int matricula;
-  final String? imgur; // <- IMPORTANTE: tipo nullable
+  final String? imgur;
 
   const _PersonaCard({
     required this.name,
     required this.role,
     required this.matricula,
-    this.imgur, // <- debe coincidir con el tipo nullable
+    this.imgur,
   });
 
   @override
@@ -172,13 +203,14 @@ class _PersonaCard extends StatelessWidget {
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(role),
         trailing: const Icon(Icons.chevron_right),
-        onTap:
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => PerfilUsuarioPage(matricula: matricula),
-              ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PerfilUsuarioPage(matricula: matricula),
             ),
+          );
+        },
       ),
     );
   }
