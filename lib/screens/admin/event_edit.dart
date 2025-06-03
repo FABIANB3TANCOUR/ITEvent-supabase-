@@ -33,6 +33,11 @@ class _EditEventScreenState extends State<EditEventScreen> {
     _loadEventData();
   }
 
+  String? limpiarTexto(TextEditingController controller) {
+    final texto = controller.text.trim();
+    return texto.isEmpty ? null : texto;
+  }
+
   Future<void> _loadEventData() async {
     try {
       final data =
@@ -81,15 +86,15 @@ class _EditEventScreenState extends State<EditEventScreen> {
       await supabase
           .from('eventos')
           .update({
-            'nombre_evento': _nombreController.text,
-            'descripcion': _descripcionController.text,
+            'nombre_evento': limpiarTexto(_nombreController),
+            'descripcion': limpiarTexto(_descripcionController),
             'cupo_total': int.tryParse(_cupoController.text) ?? 0,
-            'logo_url': _logoUrlController.text,
-            'portada_url': _portadaUrlController.text,
-            'fecha_inicio': _fechaInicio!.toIso8601String(),
-            'fecha_fin': _fechaFin!.toIso8601String(),
-            'estado': _estadoController.text,
-            'municipio': _municipioController.text,
+            'logo_url': limpiarTexto(_logoUrlController),
+            'portada_url': limpiarTexto(_portadaUrlController),
+            'fecha_inicio': _fechaInicio?.toIso8601String(),
+            'fecha_fin': _fechaFin?.toIso8601String(),
+            'estado': limpiarTexto(_estadoController),
+            'municipio': limpiarTexto(_municipioController),
             'organizador_id': _organizadorSeleccionado,
           })
           .eq('id', widget.eventId);
