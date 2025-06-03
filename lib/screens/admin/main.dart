@@ -87,7 +87,47 @@ class _EventScreenState extends State<EventScreen> {
           isLoading
               ? const Center(child: CircularProgressIndicator())
               : eventos.isEmpty
-              ? const Center(child: Text('No hay eventos disponibles.'))
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Por el momento no cuentas con\nningun evento.\nExplora más eventos',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NuevoEventoScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 14,
+                        ),
+                      ),
+                      child: const Text(
+                        'Agregar evento',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
               : RefreshIndicator(
                 onRefresh: _cargarEventos,
                 child: ListView.builder(
@@ -134,16 +174,21 @@ class _EventScreenState extends State<EventScreen> {
                   },
                 ),
               ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.indigo,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const NuevoEventoScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton:
+          eventos.isNotEmpty
+              ? FloatingActionButton(
+                backgroundColor: Colors.indigo,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NuevoEventoScreen(),
+                    ),
+                  );
+                },
+                child: const Icon(Icons.add),
+              )
+              : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         selectedItemColor: Colors.blue,
