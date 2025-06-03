@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:itevent/screens/admin/actividad.dart';
+import 'package:itevent/screens/admin/actividad_new.dart';
 import 'package:itevent/screens/admin/main_navigator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -96,12 +97,15 @@ class _AgendaEventoScreenState extends State<AgendaEventoScreen> {
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(
-                        //     builder: (_) => const NuevoEventoScreen(),
-                        //   ),
-                        // );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (_) => AddActividadScreen(
+                                  idEvento: widget.idEvento,
+                                ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
@@ -328,12 +332,13 @@ class _AgendaEventoScreenState extends State<AgendaEventoScreen> {
                 backgroundColor: const Color(0xFF3966CC),
                 child: const Icon(Icons.add, color: Colors.white),
                 onPressed: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (_) => AgregarActividadScreen(idEvento: widget.idEvento),
-                  //   ),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (_) => AddActividadScreen(idEvento: widget.idEvento),
+                    ),
+                  );
                 },
               )
               : null,

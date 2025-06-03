@@ -104,7 +104,7 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalle de Actividad'),
-        backgroundColor: const Color(0xFF3966CC),
+        backgroundColor: Colors.blue,
         centerTitle: true,
       ),
       body:

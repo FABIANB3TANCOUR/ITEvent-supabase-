@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class EditActividadScreen extends StatefulWidget {
-  final int actividadId;
-
-  const EditActividadScreen({super.key, required this.actividadId});
+class AddActividadScreen extends StatefulWidget {
+  final int idEvento;
+  const AddActividadScreen({super.key, required this.idEvento});
 
   @override
-  State<EditActividadScreen> createState() => _EditActividadScreenState();
+  State<AddActividadScreen> createState() => _AddActividadScreenState();
 }
 
-class _EditActividadScreenState extends State<EditActividadScreen> {
+class _AddActividadScreenState extends State<AddActividadScreen> {
   final supabase = Supabase.instance.client;
 
   final _nombreController = TextEditingController();
@@ -23,48 +22,9 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
   DateTime? _fecha;
   TimeOfDay? _horaInicio;
   TimeOfDay? _horaFin;
-  bool _isLoading = true;
+  bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadActividad();
-  }
-
-  Future<void> _loadActividad() async {
-    try {
-      final data =
-          await supabase
-              .from('actividad')
-              .select()
-              .eq('id', widget.actividadId)
-              .maybeSingle();
-
-      if (data != null) {
-        _nombreController.text = data['nombre'] ?? '';
-        _descripcionController.text = data['descripcion'] ?? '';
-        _capacidadController.text = (data['capacidad'] ?? '').toString();
-        _lugarController.text = data['lugar'] ?? '';
-        _lugarUrlController.text = data['lugar_url'] ?? '';
-        _portadaUrlController.text = data['portada_url'] ?? '';
-        _fecha = DateTime.tryParse(data['fecha']);
-        _horaInicio = TimeOfDay.fromDateTime(
-          DateTime.parse('2000-01-01T${data['hora_inicio']}'),
-        );
-        _horaFin = TimeOfDay.fromDateTime(
-          DateTime.parse('2000-01-01T${data['hora_fin']}'),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar la actividad: $e')),
-      );
-    }
-
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _updateActividad() async {
+  Future<void> _insertarActividad() async {
     if (_fecha == null || _horaInicio == null || _horaFin == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Completa fecha y horario.')),
@@ -72,34 +32,36 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
       return;
     }
 
+    setState(() => _isLoading = true);
+
     try {
-      await supabase
-          .from('actividad')
-          .update({
-            'nombre': _nombreController.text.trim(),
-            'descripcion': _descripcionController.text.trim(),
-            'capacidad': int.tryParse(_capacidadController.text) ?? 0,
-            'lugar': _lugarController.text.trim(),
-            'lugar_url': _lugarUrlController.text.trim(),
-            'portada_url': _portadaUrlController.text.trim(),
-            'fecha': _fecha!.toIso8601String().split('T').first,
-            'hora_inicio':
-                '${_horaInicio!.hour.toString().padLeft(2, '0')}:${_horaInicio!.minute.toString().padLeft(2, '0')}',
-            'hora_fin':
-                '${_horaFin!.hour.toString().padLeft(2, '0')}:${_horaFin!.minute.toString().padLeft(2, '0')}',
-          })
-          .eq('id', widget.actividadId);
+      await supabase.from('actividad').insert({
+        'nombre': _nombreController.text.trim(),
+        'descripcion': _descripcionController.text.trim(),
+        'capacidad': int.tryParse(_capacidadController.text) ?? 0,
+        'lugar': _lugarController.text.trim(),
+        'lugar_url': _lugarUrlController.text.trim(),
+        'portada_url': _portadaUrlController.text.trim(),
+        'fecha': _fecha!.toIso8601String().split('T').first,
+        'hora_inicio':
+            '${_horaInicio!.hour.toString().padLeft(2, '0')}:${_horaInicio!.minute.toString().padLeft(2, '0')}',
+        'hora_fin':
+            '${_horaFin!.hour.toString().padLeft(2, '0')}:${_horaFin!.minute.toString().padLeft(2, '0')}',
+        'id_evento': widget.idEvento,
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Actividad actualizada correctamente')),
+          const SnackBar(content: Text('Actividad registrada correctamente')),
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error al registrar: $e')));
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -147,7 +109,7 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Editar Actividad'),
+        title: const Text('Agregar Actividad'),
         backgroundColor: Colors.blue,
         centerTitle: true,
       ),
@@ -212,7 +174,6 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
                                 ),
                               ),
                             ),
-
                           const SizedBox(height: 10),
                           Row(
                             children: [
@@ -232,7 +193,6 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Hora de inicio
                               Row(
                                 children: [
                                   ElevatedButton(
@@ -247,8 +207,6 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-
-                              // Hora de fin
                               Row(
                                 children: [
                                   ElevatedButton(
@@ -263,16 +221,15 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 20),
                           ElevatedButton(
-                            onPressed: _updateActividad,
+                            onPressed: _insertarActividad,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF3966CC),
                               minimumSize: const Size(double.infinity, 48),
                             ),
                             child: const Text(
-                              'Actualizar Actividad',
+                              'Registrar Actividad',
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
