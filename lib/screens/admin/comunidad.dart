@@ -88,7 +88,7 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: 'Buscar por rol (ej. alumno, docente)',
+                        hintText: 'Buscar por rol (ej. estudiante, staff)',
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon:
                             _filtroRol.isNotEmpty

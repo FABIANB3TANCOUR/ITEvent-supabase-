@@ -197,46 +197,68 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                   // Sección de contacto
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
+                      horizontal: 16.0,
                       vertical: 8,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Contacto',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Mantente en contacto con $fullName intercambiando información de contacto',
-                        ),
-                        const SizedBox(height: 16),
-                        Center(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[900],
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 12,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder:
+                              (_) => AlertDialog(
+                                title: const Text('¿Eliminar perfil?'),
+                                content: const Text(
+                                  'Esta acción no se puede deshacer.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.pop(context, false),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.pop(context, true),
+                                    child: const Text(
+                                      'Eliminar',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                            ),
-                            onPressed: () {
-                              // Acción para intercambiar info
-                            },
-                            child: const Text(
-                              'Contactar información',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ],
+                        );
+
+                        if (confirm == true) {
+                          try {
+                            await supabase
+                                .from('usuarios')
+                                .delete()
+                                .eq('matricula', widget.matricula);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Perfil eliminado exitosamente',
+                                  ),
+                                ),
+                              );
+                              Navigator.pop(
+                                context,
+                              ); // Regresa a la pantalla anterior
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error al eliminar: $e')),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.delete),
+                      label: const Text('Eliminar perfil'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ),
                 ],
