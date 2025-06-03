@@ -58,7 +58,7 @@ class _EventScreenState extends State<EventScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B5998),
+        backgroundColor: Colors.blue,
         leading: GestureDetector(
           onTap:
               () => Navigator.push(
@@ -186,7 +186,7 @@ class _EventScreenState extends State<EventScreen> {
                     ),
                   );
                 },
-                child: const Icon(Icons.add),
+                child: const Icon(Icons.add, color: Colors.white),
               )
               : null,
       bottomNavigationBar: BottomNavigationBar(

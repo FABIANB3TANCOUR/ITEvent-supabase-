@@ -10,7 +10,7 @@ class NotificationsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B5998), // Azul
+        backgroundColor: Colors.blue, // Azul
         leading: Stack(
           alignment: Alignment.topRight,
           children: [

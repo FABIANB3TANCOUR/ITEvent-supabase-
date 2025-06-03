@@ -114,9 +114,16 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        leading: Material(
+          color: Colors.transparent, // Para que respete el fondo del AppBar
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => Navigator.pop(context),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(Icons.arrow_back, color: Colors.white),
+            ),
+          ),
         ),
       ),
       body:

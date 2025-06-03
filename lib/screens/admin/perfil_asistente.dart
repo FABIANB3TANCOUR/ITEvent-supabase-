@@ -61,7 +61,7 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B5998),
+        backgroundColor: Colors.blue,
         title: Text(
           fullName.isEmpty ? 'Perfil' : fullName,
           style: const TextStyle(fontWeight: FontWeight.bold),

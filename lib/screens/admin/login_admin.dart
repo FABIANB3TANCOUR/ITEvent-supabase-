@@ -75,8 +75,38 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login Administrador')),
-      body: _loginForm(),
+      appBar: AppBar(
+        title: const Text(
+          'Login Administrador',
+          style: TextStyle(
+            color: Color.fromARGB(255, 204, 204, 204),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: Material(
+          color: Colors.transparent, // Para que respete el fondo del AppBar
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => Navigator.pop(context),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(Icons.arrow_back, color: Colors.white),
+            ),
+          ),
+        ),
+
+        backgroundColor: Color(0xFF162A87),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF162A87), Colors.white],
+          ),
+        ),
+        child: _loginForm(),
+      ),
     );
   }
 
@@ -86,12 +116,27 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           children: [
-            const Text(
-              'ITEvent',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: Colors.indigo,
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'ITE',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.yellow[700],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'vent',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo[900],
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 40),
@@ -175,7 +220,10 @@ class _LoginAdminPageState extends State<LoginAdminPage> {
                               )
                               : const Text(
                                 'Iniciar Sesión',
-                                style: TextStyle(fontSize: 16),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                     ),
                   ),

@@ -10,7 +10,7 @@ class MensajesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B5998),
+        backgroundColor: Colors.blue,
         leading: Stack(
           alignment: Alignment.topRight,
           children: [

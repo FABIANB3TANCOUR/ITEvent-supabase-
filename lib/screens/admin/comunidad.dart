@@ -27,7 +27,7 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B5998),
+        backgroundColor: Colors.blue,
         leading: GestureDetector(
           onTap:
               () => Navigator.push(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'admin/login_admin.dart';
 import 'staff/login_staff.dart';
-import 'users/login_user.dart';  // Invitado será alumno para este ejemplo, o puedes crear otro login si quieres
+import 'users/login_user.dart'; // Invitado será alumno para este ejemplo, o puedes crear otro login si quieres
 
 class TypeLogin extends StatelessWidget {
   const TypeLogin({super.key});
@@ -10,15 +10,26 @@ class TypeLogin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF162A87),
+        leading: Material(
+          color: Colors.transparent, // Para que respete el fondo del AppBar
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => Navigator.pop(context),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(Icons.arrow_back, color: Colors.white),
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF162A87),
-              Colors.white,
-            ],
+            colors: [Color(0xFF162A87), Colors.white],
           ),
         ),
         child: Column(
