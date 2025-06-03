@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:itevent/screens/admin/actividad_actualizar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DetalleActividadScreen extends StatefulWidget {
@@ -260,15 +261,15 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
                           // Botón Actualizar
                           ElevatedButton.icon(
                             onPressed: () {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder:
-                              //         (_) => PantallaActualizarActividad(
-                              //           idActividad: widget.idActividad,
-                              //         ),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => EditActividadScreen(
+                                        actividadId: widget.idActividad,
+                                      ),
+                                ),
+                              );
                             },
                             icon: const Icon(Icons.edit),
                             label: const Text('Editar'),
