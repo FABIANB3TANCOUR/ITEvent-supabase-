@@ -13,8 +13,8 @@ class PerfilScreen extends StatefulWidget {
 }
 
 class _PerfilScreenState extends State<PerfilScreen> {
-  String nombre = '';
-  String correo = '';
+  final supabase = Supabase.instance.client;
+  Map<String, dynamic>? adminData;
   bool loading = true;
 
   @override
@@ -28,31 +28,26 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final adminId = prefs.getInt('adminId');
     if (adminId == null) return;
 
-    final supabase = Supabase.instance.client;
     final data =
         await supabase
             .from('administradores')
-            .select()
+            .select('id, nombre, correo, fecha_registro, foto_url')
             .eq('id', adminId)
             .maybeSingle();
 
-    if (data != null) {
-      setState(() {
-        nombre = data['nombre'] ?? '';
-        correo = data['correo'] ?? '';
-        loading = false;
-      });
-    }
+    setState(() {
+      adminData = data;
+      loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF3B5998),
-        leading: const Icon(Icons.person),
+        backgroundColor: Colors.blue,
         title: const Text(
-          'Perfil',
+          'Perfil del Administrador',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontStyle: FontStyle.italic,
@@ -64,73 +59,87 @@ class _PerfilScreenState extends State<PerfilScreen> {
       body:
           loading
               ? const Center(child: CircularProgressIndicator())
-              : ListView(
-                children: [
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      FilterChip(
-                        label: const Text("Todo"),
-                        selected: false,
-                        onSelected: (_) {},
-                      ),
-                      FilterChip(
-                        label: const Text("Recomendado"),
-                        selected: true,
-                        selectedColor: Colors.black45,
-                        onSelected: (_) {},
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 30),
-                  ListTile(
-                    leading: const CircleAvatar(
-                      radius: 30,
-                      child: Icon(Icons.person, size: 30),
+              : adminData == null
+              ? const Center(child: Text("No se encontró el perfil"))
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    title: Text(
-                      nombre,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(correo),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ModifPerfil(),
+                    width: 400,
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundImage:
+                              (adminData!['foto_url'] != null &&
+                                      adminData!['foto_url']
+                                          .toString()
+                                          .isNotEmpty)
+                                  ? NetworkImage(adminData!['foto_url'])
+                                  : null,
+                          child:
+                              (adminData!['foto_url'] == null ||
+                                      adminData!['foto_url'].toString().isEmpty)
+                                  ? const Icon(Icons.person, size: 50)
+                                  : null,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          adminData!['nombre'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      },
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          adminData!['correo'] ?? '',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Registro: ${adminData!['fecha_registro'] != null ? adminData!['fecha_registro'].toString().split('T').first : 'No disponible'}',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EditarPerfilScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Editar Perfil'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 48),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: Text(
-                      'Recomendaciones',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                  _recomButton('Agregar localidad'),
-                  _recomButton('Agregar afiliación'),
-                  _recomButton('Agregar intereses'),
-                ],
+                ),
               ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 3,
         selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
         onTap: (index) => navigateToPage(context, index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -145,19 +154,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
             label: 'Notificación',
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _recomButton(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 6),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF3B5998),
-        ),
-        onPressed: () {},
-        child: Text(text, style: const TextStyle(color: Colors.white)),
       ),
     );
   }
