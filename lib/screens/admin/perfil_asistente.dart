@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:itevent/screens/admin/chat.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_navigator.dart';
@@ -17,6 +19,7 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
 
   Map<String, dynamic>? user;
   bool loading = true;
+  int? adminId;
 
   @override
   void initState() {
@@ -25,20 +28,24 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
   }
 
   Future<void> _loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    adminId = prefs.getInt('adminId');
+    if (adminId == null) return;
     try {
       final data =
           await supabase
               .from('usuarios')
               .select('''
-            id,
+            matricula,
             nombre,
             apellido,
-            rol,
+            roles(nombre),
             correo,
             telefono,
-            foto_url
+            foto_url,
+            nota
           ''')
-              .eq('id', widget.matricula)
+              .eq('matricula', widget.matricula)
               .maybeSingle();
 
       setState(() {
@@ -76,22 +83,6 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
               : Column(
                 children: [
                   // Cabecera azul
-                  Container(
-                    color: Colors.blue[900],
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Center(
-                      child: Text(
-                        fullName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontStyle: FontStyle.italic,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                  ),
 
                   // Bloque gris con avatar y datos
                   Container(
@@ -131,7 +122,7 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                user?['rol'] ?? 'Sin rol',
+                                user?['roles']['nombre'] ?? 'Sin rol',
                                 style: const TextStyle(color: Colors.white),
                               ),
                               if ((user?['correo'] ?? '').toString().isNotEmpty)
@@ -149,18 +140,32 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                             ],
                           ),
                         ),
-                        Column(
-                          children: const [
-                            Icon(Icons.mail_outline, color: Colors.white),
-                            SizedBox(height: 4),
-                            Text(
-                              'Mensaje',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (_) => ChatPage(
+                                      adminId: adminId!,
+                                      destinatarioId: widget.matricula,
+                                    ),
                               ),
-                            ),
-                          ],
+                            );
+                          },
+                          child: Column(
+                            children: const [
+                              Icon(Icons.mail_outline, color: Colors.white),
+                              SizedBox(height: 4),
+                              Text(
+                                'Mensaje',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -169,7 +174,7 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                   const Divider(height: 1),
 
                   // Notas personales (placeholder)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +187,7 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                           ),
                         ),
                         SizedBox(height: 8),
-                        Text('Escribe Notas'),
+                        Text(user?['nota'] ?? 'No hay notas'),
                       ],
                     ),
                   ),

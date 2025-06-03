@@ -98,6 +98,7 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
                       name: nombreCompleto.trim(),
                       role: u['roles']?['nombre'] ?? 'Sin rol',
                       matricula: u['matricula'] as int,
+                      imgur: u['foto_url'],
                     );
                   },
                 );
@@ -143,11 +144,13 @@ class _PersonaCard extends StatelessWidget {
   final String name;
   final String role;
   final int matricula;
+  final String? imgur; // <- IMPORTANTE: tipo nullable
 
   const _PersonaCard({
     required this.name,
     required this.role,
     required this.matricula,
+    this.imgur, // <- debe coincidir con el tipo nullable
   });
 
   @override
@@ -156,11 +159,15 @@ class _PersonaCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Colors.indigo,
-          child: Text(
-            name.isNotEmpty ? name[0] : '?',
-            style: const TextStyle(color: Colors.white),
-          ),
+          radius: 40,
+          backgroundImage:
+              (imgur != null && imgur!.isNotEmpty)
+                  ? NetworkImage(imgur!)
+                  : null,
+          child:
+              (imgur == null || imgur!.isEmpty)
+                  ? const Icon(Icons.person, size: 40)
+                  : null,
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(role),
