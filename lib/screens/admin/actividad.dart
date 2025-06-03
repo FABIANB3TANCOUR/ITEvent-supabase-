@@ -272,7 +272,15 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
                               );
                             },
                             icon: const Icon(Icons.edit),
-                            label: const Text('Editar'),
+                            label: const Text(
+                              'Editar',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
                               padding: const EdgeInsets.symmetric(
@@ -286,7 +294,15 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
                           ElevatedButton.icon(
                             onPressed: _confirmarEliminacion,
                             icon: const Icon(Icons.delete),
-                            label: const Text('Eliminar'),
+                            label: const Text(
+                              'Eliminar',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
                               padding: const EdgeInsets.symmetric(
