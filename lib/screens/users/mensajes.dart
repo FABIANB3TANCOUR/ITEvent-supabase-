@@ -18,7 +18,7 @@ class _MensajesScreenState extends State<MensajesScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _usuarios = [];
   String _filtroBusqueda = '';
-  int? adminId;
+  int? matricula;
   bool loading = true;
 
   @override
@@ -29,24 +29,43 @@ class _MensajesScreenState extends State<MensajesScreen> {
 
   Future<void> _loadAdminIdYUsuarios() async {
     final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getInt('adminId');
+    matricula = prefs.getInt('matricula');
 
-    if (id == null) {
-      setState(() {
-        loading = false;
-      });
+    if (matricula == null) {
+      setState(() => loading = false);
       return;
     }
 
-    adminId = id;
-
-    final data = await supabase
+    // Cargar usuarios normales
+    final dataUsuarios = await supabase
         .from('usuarios')
         .select('matricula, nombre, apellido, roles(nombre), foto_url')
+        .neq('matricula', matricula!) // Excluir al usuario actual
         .order('nombre');
 
+    // Cargar administradores
+    final dataAdmins = await supabase
+        .from('administradores')
+        .select('id, nombre, correo, foto_url');
+
+    // Convertir y unificar
+    final List<Map<String, dynamic>> listaUsuarios =
+        List<Map<String, dynamic>>.from(dataUsuarios);
+
+    final List<Map<String, dynamic>> listaAdmins =
+        List<Map<String, dynamic>>.from(dataAdmins).map((admin) {
+          return {
+            'matricula': admin['id'], // estandarizamos como matricula
+            'nombre': admin['nombre'],
+            'apellido': '', // vacío si no hay campo apellido
+            'roles': {'nombre': 'Administrador'},
+            'foot_url': admin['foot_url'],
+          };
+        }).toList();
+
+    // Combinar usuarios y administradores
     setState(() {
-      _usuarios = List<Map<String, dynamic>>.from(data);
+      _usuarios = [...listaUsuarios, ...listaAdmins];
       loading = false;
     });
   }
@@ -133,7 +152,7 @@ class _MensajesScreenState extends State<MensajesScreen> {
                                   role: usuario['roles']['nombre'],
                                   matricula: usuario['matricula'],
                                   imgur: usuario['foto_url'],
-                                  adminId: adminId!,
+                                  remitente: matricula!,
                                 );
                               },
                             ),
@@ -168,14 +187,14 @@ class _PersonaCard extends StatelessWidget {
   final String role;
   final int matricula;
   final String? imgur;
-  final int adminId;
+  final int remitente;
 
   const _PersonaCard({
     required this.name,
     required this.role,
     required this.matricula,
     this.imgur,
-    required this.adminId,
+    required this.remitente,
   });
 
   @override
@@ -198,11 +217,17 @@ class _PersonaCard extends StatelessWidget {
         subtitle: Text(role),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
+          final isAdmin = role.toLowerCase() == 'administrador';
+
           Navigator.push(
             context,
             MaterialPageRoute(
               builder:
-                  (_) => ChatPage(adminId: adminId, destinatarioId: matricula),
+                  (_) => ChatPage(
+                    remitenteId: remitente,
+                    destinatarioId: isAdmin ? null : matricula,
+                    adminId: isAdmin ? matricula : null,
+                  ),
             ),
           );
         },

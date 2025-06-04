@@ -34,38 +34,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
   }
 
-  Future<void> _eliminarNotificacion(int id) async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('¿Eliminar notificación?'),
-            content: const Text('Esta acción no se puede deshacer.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancelar'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text(
-                  'Eliminar',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
-          ),
-    );
-
-    if (confirmar == true) {
-      await supabase.from('notificaciones').delete().eq('id', id);
-      _fetchNotificaciones();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Notificación eliminada')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,7 +78,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     title: noti['titulo'],
                     subtitle: noti['descripcion'] ?? '',
                     logoUrl: noti['logo_url'],
-                    onDelete: () => _eliminarNotificacion(noti['id']),
                   );
                 },
               ),
@@ -143,14 +110,12 @@ class NotiCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? logoUrl;
-  final VoidCallback onDelete;
 
   const NotiCard({
     super.key,
     required this.id,
     required this.title,
     required this.subtitle,
-    required this.onDelete,
     this.logoUrl,
   });
 
@@ -163,10 +128,6 @@ class NotiCard extends StatelessWidget {
               : const Icon(Icons.notifications, size: 36),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text(subtitle),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: onDelete,
-      ),
     );
   }
 }
