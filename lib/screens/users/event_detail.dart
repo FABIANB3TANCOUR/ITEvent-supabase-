@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:itevent/screens/users/agenda_detail.dart';
 import 'package:itevent/screens/users/main.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,12 +17,14 @@ class EventDetailUser extends StatefulWidget {
 
 class _EventDetailUserState extends State<EventDetailUser> {
   final supabase = Supabase.instance.client;
+  static const String _mapboxApiKey = 'pk.eyJ1IjoidGhlbWFtaXRhczQzIiwiYSI6ImNtYmlpZWV0ZzA2MWUybXB6NDk4eGU3ZDIifQ.g2P3tNXrG58VBYiOL8Ob1Q';
 
   Map<String, dynamic>? event;
   bool _isLoading = true;
   String localidad = '';
   int? matricula;
   bool yaRegistrado = false;
+  LatLng? _ubicacionEvento;
 
   @override
   void initState() {
@@ -38,10 +42,9 @@ class _EventDetailUserState extends State<EventDetailUser> {
   Future<void> _loadEventDetail() async {
     setState(() => _isLoading = true);
     try {
-      final data =
-          await supabase
-              .from('eventos')
-              .select('''
+      final data = await supabase
+          .from('eventos')
+          .select('''
             id,
             nombre_evento,
             cupo_total,
@@ -52,36 +55,49 @@ class _EventDetailUserState extends State<EventDetailUser> {
             descripcion,
             estado,
             municipio,
+            direccion,
+            latitud,
+            longitud,
             organizadores ( nombre )
           ''')
-              .eq('id', widget.eventId)
-              .maybeSingle();
+          .eq('id', widget.eventId)
+          .maybeSingle();
 
       setState(() {
         event = data;
         _isLoading = false;
+        
+        if (data != null && data['latitud'] != null && data['longitud'] != null) {
+          _ubicacionEvento = LatLng(
+            (data['latitud'] as num).toDouble(),
+            (data['longitud'] as num).toDouble(),
+          );
+        }
       });
-      if (event!['municipio'] != null && event!['estado'] != null) {
+      
+      if (event?['municipio'] != null && event?['estado'] != null) {
         localidad = '${event!['municipio']}, ${event!['estado']}';
       } else {
-        localidad = 'Ubicacion no disponible';
+        localidad = 'Ubicación no disponible';
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al cargar el evento: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar el evento: $e')));
+      }
     }
   }
 
   Future<void> _verificarRegistro() async {
-    final result =
-        await supabase
-            .from('registros')
-            .select()
-            .eq('matricula', matricula!)
-            .eq('id_evento', widget.eventId)
-            .maybeSingle();
+    if (matricula == null) return;
+
+    final result = await supabase
+        .from('registros')
+        .select()
+        .eq('matricula', matricula!)
+        .eq('id_evento', widget.eventId)
+        .maybeSingle();
 
     setState(() {
       yaRegistrado = result != null;
@@ -89,6 +105,8 @@ class _EventDetailUserState extends State<EventDetailUser> {
   }
 
   Future<void> _registrarse() async {
+    if (matricula == null) return;
+
     try {
       await supabase.from('registros').insert({
         'matricula': matricula,
@@ -102,17 +120,70 @@ class _EventDetailUserState extends State<EventDetailUser> {
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => EventScreen()),
+          MaterialPageRoute(builder: (_) => const EventScreen()),
           (Route<dynamic> route) => false,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error al registrar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al registrar: $e')));
       }
     }
+  }
+
+  Widget _buildMapaUbicacion() {
+    if (_ubicacionEvento == null) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(
+          child: Text('Ubicación no disponible'),
+        ),
+      );
+    }
+
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: FlutterMap(
+          options: MapOptions(
+            initialCenter: _ubicacionEvento!,
+            initialZoom: 15.0,
+            interactionOptions: const InteractionOptions(
+              flags: ~InteractiveFlag.rotate,
+            ),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token=$_mapboxApiKey',
+              userAgentPackageName: 'com.example.itevent',
+            ),
+            MarkerLayer(
+              markers: [
+                Marker(
+                  width: 40,
+                  height: 40,
+                  point: _ubicacionEvento!,
+                  child: const Icon(
+                    Icons.location_pin,
+                    color: Colors.red,
+                    size: 40,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -138,100 +209,112 @@ class _EventDetailUserState extends State<EventDetailUser> {
           ),
         ),
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : event == null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : event == null
               ? const Center(child: Text('Evento no encontrado'))
               : ListView(
-                children: [
-                  if (event!['portada_url'] != null)
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(16),
+                  children: [
+                    if (event?['portada_url'] != null)
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(16)),
+                        child: Image.network(
+                          event!['portada_url'],
+                          height: 220,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                      child: Image.network(
-                        event!['portada_url'],
-                        height: 220,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          event!['nombre_evento'] ?? 'Sin nombre',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          localidad,
-                          style: TextStyle(color: Colors.grey[700]),
-                        ),
-                        Text(
-                          _formatearFecha(event!['fecha_fin']),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Divider(),
-                        const SizedBox(height: 10),
-                        _seccionTitulo('Sobre el evento'),
-                        const SizedBox(height: 12),
-                        _infoCard([
-                          _infoText('Descripcion', event!['descripcion']),
-                          _infoText(
-                            'Organizador',
-                            event!['organizadores']?['nombre'],
-                          ),
-                          _infoText(
-                            'Cupo total',
-                            event!['cupo_total'].toString(),
-                          ),
-                          _infoText(
-                            'Fecha de inicio',
-                            _formatearFecha(event!['fecha_inicio']),
-                          ),
-                          _infoText(
-                            'Fecha de fin',
-                            _formatearFecha(event!['fecha_fin']),
-                          ),
-                          _infoText(
-                            'Creado en',
-                            _formatearFecha(event!['created_at']),
-                          ),
-                        ]),
-                        const SizedBox(height: 25),
-                        _actionButton('Ver actividades', Colors.blue, () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (_) => AgendaEventoScreen(
-                                    idEvento: widget.eventId,
-                                  ),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            event?['nombre_evento'] ?? 'Sin nombre',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        }),
-                        if (!yaRegistrado)
-                          _actionButton(
-                            'Registrarme al evento',
-                            Colors.green,
-                            _registrarse,
                           ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            localidad,
+                            style: TextStyle(color: Colors.grey[700]),
+                          ),
+                          Text(
+                            _formatearFecha(event?['fecha_fin'] ?? ''),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Divider(),
+                          const SizedBox(height: 10),
+                          _seccionTitulo('Sobre el evento'),
+                          const SizedBox(height: 12),
+                          _infoCard([
+                            _infoText('Descripción', event?['descripcion']),
+                            _infoText(
+                              'Organizador',
+                              event?['organizadores']?['nombre'],
+                            ),
+                            _infoText(
+                              'Cupo total',
+                              event?['cupo_total']?.toString(),
+                            ),
+                            _infoText(
+                              'Fecha de inicio',
+                              _formatearFecha(event?['fecha_inicio'] ?? ''),
+                            ),
+                            _infoText(
+                              'Fecha de fin',
+                              _formatearFecha(event?['fecha_fin'] ?? ''),
+                            ),
+                            _infoText(
+                              'Creado en',
+                              _formatearFecha(event?['created_at'] ?? ''),
+                            ),
+                          ]),
+                          
+                          // Sección de ubicación con mapa
+                          const SizedBox(height: 25),
+                          _seccionTitulo('Ubicación del evento'),
+                          const SizedBox(height: 12),
+                          if (event?['direccion'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                event!['direccion'],
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          _buildMapaUbicacion(),
+                          
+                          const SizedBox(height: 25),
+                          _actionButton('Ver actividades', Colors.blue, () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AgendaEventoScreen(
+                                  idEvento: widget.eventId,
+                                ),
+                              ),
+                            );
+                          }),
+                          if (!yaRegistrado)
+                            _actionButton(
+                              'Registrarme al evento',
+                              Colors.green,
+                              _registrarse,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
     );
   }
 
