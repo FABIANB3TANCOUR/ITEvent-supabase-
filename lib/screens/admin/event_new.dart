@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class NuevoEventoScreen extends StatefulWidget {
   const NuevoEventoScreen({super.key});
@@ -10,7 +14,9 @@ class NuevoEventoScreen extends StatefulWidget {
 
 class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
   final supabase = Supabase.instance.client;
-
+  final _formKey = GlobalKey<FormState>();
+  
+  // Controladores
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _cupoController = TextEditingController();
@@ -18,145 +24,327 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
   final _portadaUrlController = TextEditingController();
   final _estadoController = TextEditingController();
   final _municipioController = TextEditingController();
+  final _direccionController = TextEditingController();
 
+  // Variables de estado
   DateTime? _fechaInicio;
   DateTime? _fechaFin;
-
-  List<dynamic> _organizadores = [];
+  LatLng? _ubicacionSeleccionada;
+  List<Map<String, dynamic>> _organizadores = [];
   int? _organizadorSeleccionado;
-
   bool _isLoading = true;
+
+  // Mapbox
+  static const String _mapboxApiKey = 'TU_API_KEY_MAPBOX';
 
   @override
   void initState() {
     super.initState();
-    _loadOrganizadores();
+    _cargarOrganizadores();
   }
 
-  String? limpiarTexto(TextEditingController controller) {
-    final texto = controller.text.trim();
-    return texto.isEmpty ? null : texto;
-  }
-
-  Future<void> _loadOrganizadores() async {
+  Future<void> _cargarOrganizadores() async {
     try {
-      final data = await supabase.from('organizadores').select('id, nombre');
-      _organizadores = data;
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar organizadores: $e')),
-      );
-    }
-
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _createEvent() async {
-    if (_fechaInicio == null || _fechaFin == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Selecciona ambas fechas.')));
-      return;
-    }
-
-    try {
-      await supabase.from('eventos').insert({
-        'nombre_evento': limpiarTexto(_nombreController),
-        'descripcion': limpiarTexto(_descripcionController),
-        'cupo_total': int.tryParse(_cupoController.text) ?? 0,
-        'logo_url': limpiarTexto(_logoUrlController),
-        'portada_url': limpiarTexto(_portadaUrlController),
-        'fecha_inicio': _fechaInicio?.toIso8601String(),
-        'fecha_fin': _fechaFin?.toIso8601String(),
-        'estado': limpiarTexto(_estadoController),
-        'municipio': limpiarTexto(_municipioController),
-        'organizador_id': _organizadorSeleccionado,
+      final response = await supabase.from('organizadores').select('id, nombre');
+      setState(() {
+        _organizadores = List<Map<String, dynamic>>.from(response);
+        _isLoading = false;
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Evento creado correctamente')),
-        );
-        Navigator.pop(context, true); // volver
-      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al crear evento: $e')));
+      _mostrarError('Error al cargar organizadores: $e');
     }
   }
 
-  Future<void> _pickDate({required bool isInicio}) async {
-    final selected = await showDatePicker(
+  // --- Funciones para fechas ---
+  Future<void> _seleccionarFecha(bool esInicio) async {
+    final fecha = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(2023),
       lastDate: DateTime(2100),
     );
-
-    if (selected != null) {
-      setState(() {
-        if (isInicio) {
-          _fechaInicio = selected;
-        } else {
-          _fechaFin = selected;
-        }
-      });
+    if (fecha != null) {
+      setState(() => esInicio ? _fechaInicio = fecha : _fechaFin = fecha);
     }
   }
 
-  Widget _buildDatePicker(String label, bool isInicio) {
-    final selectedDate = isInicio ? _fechaInicio : _fechaFin;
+  // --- Funciones para Mapbox ---
+  Future<void> _buscarDireccion() async {
+    if (_direccionController.text.isEmpty) return;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Text('$label:', style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: InkWell(
-              onTap: () => _pickDate(isInicio: isInicio),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  selectedDate != null
-                      ? '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}'
-                      : 'Seleccionar fecha',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ),
-            ),
-          ),
-        ],
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://api.mapbox.com/geocoding/v5/mapbox.places/${Uri.encodeComponent(_direccionController.text)}.json?access_token=$_mapboxApiKey&limit=1',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['features'].isNotEmpty) {
+          final coords = data['features'][0]['center']; // [long, lat]
+          final latLng = LatLng(coords[1], coords[0]);
+          
+          setState(() => _ubicacionSeleccionada = latLng);
+          await _abrirMapa(ubicacionInicial: latLng);
+        }
+      }
+    } catch (e) {
+      _mostrarError('Error en la búsqueda: $e');
+    }
+  }
+
+  Future<void> _abrirMapa({LatLng? ubicacionInicial}) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MapaUbicacion(
+          ubicacionInicial: ubicacionInicial ?? _ubicacionSeleccionada ?? const LatLng(19.4326, -99.1332),
+          apiKey: _mapboxApiKey,
+        ),
       ),
+    );
+
+    if (result != null) {
+      setState(() => _ubicacionSeleccionada = result);
+      await _actualizarDireccionDesdeCoords(result);
+    }
+  }
+
+  Future<void> _actualizarDireccionDesdeCoords(LatLng coords) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://api.mapbox.com/geocoding/v5/mapbox.places/${coords.longitude},${coords.latitude}.json?access_token=$_mapboxApiKey&limit=1',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final direccion = data['features'][0]['place_name'] ?? 'Ubicación seleccionada';
+        _direccionController.text = direccion;
+      }
+    } catch (e) {
+      _direccionController.text = 'Coordenadas: ${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}';
+    }
+  }
+
+  // --- Guardado en Supabase ---
+  Future<void> _guardarEvento() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_fechaInicio == null || _fechaFin == null || _ubicacionSeleccionada == null) {
+      _mostrarError('Completa todos los campos obligatorios');
+      return;
+    }
+
+    try {
+      await supabase.from('eventos').insert({
+        'nombre_evento': _nombreController.text.trim(),
+        'descripcion': _descripcionController.text.trim(),
+        'cupo_total': int.tryParse(_cupoController.text) ?? 0,
+        'logo_url': _logoUrlController.text.trim(),
+        'portada_url': _portadaUrlController.text.trim(),
+        'fecha_inicio': _fechaInicio!.toIso8601String(),
+        'fecha_fin': _fechaFin!.toIso8601String(),
+        'estado': _estadoController.text.trim(),
+        'municipio': _municipioController.text.trim(),
+        'organizador_id': _organizadorSeleccionado,
+        'latitud': _ubicacionSeleccionada!.latitude,
+        'longitud': _ubicacionSeleccionada!.longitude,
+        'direccion': _direccionController.text.trim(),
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Evento creado exitosamente')),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      _mostrarError('Error al guardar: $e');
+    }
+  }
+
+  void _mostrarError(String mensaje) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('❌ $mensaje')),
     );
   }
 
-  Widget _buildTextField(
-    String label,
-    TextEditingController controller, {
-    TextInputType? type,
-    int maxLines = 1,
-  }) {
+  // --- Widgets ---
+  Widget _buildImageSection() {
+    return Column(
+      children: [
+        _buildTextField('URL del logo (opcional)', _logoUrlController, esOpcional: true),
+        if (_logoUrlController.text.isNotEmpty) 
+          Image.network(
+            _logoUrlController.text,
+            height: 80,
+            errorBuilder: (_, __, ___) => _buildPlaceholder('Logo'),
+          ),
+        const SizedBox(height: 16),
+        _buildTextField('URL de portada (opcional)', _portadaUrlController, esOpcional: true),
+        if (_portadaUrlController.text.isNotEmpty)
+          Image.network(
+            _portadaUrlController.text,
+            height: 120,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildPlaceholder('Portada'),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller, {bool esOpcional = false, int? maxLines}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextField(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
         controller: controller,
-        keyboardType: type ?? TextInputType.text,
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
         ),
+        validator: esOpcional ? null : (value) => value!.isEmpty ? 'Campo requerido' : null,
       ),
+    );
+  }
+
+  Widget _buildDateField(String label, DateTime? fecha, bool esInicio) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
+        onTap: () => _seleccionarFecha(esInicio),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today, size: 20, color: Colors.grey[600]),
+              const SizedBox(width: 12),
+              Text(
+                fecha != null 
+                  ? '${fecha.day}/${fecha.month}/${fecha.year}'
+                  : 'Seleccionar fecha',
+                style: TextStyle(color: fecha != null ? Colors.black : Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationField() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Ubicación*', style: TextStyle(fontSize: 16)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _direccionController,
+                  decoration: const InputDecoration(
+                    hintText: 'Buscar dirección',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) => _ubicacionSeleccionada == null ? 'Selecciona una ubicación' : null,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: _buscarDireccion,
+              ),
+              IconButton(
+                icon: const Icon(Icons.map),
+                onPressed: _abrirMapa,
+              ),
+            ],
+          ),
+          if (_ubicacionSeleccionada != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'Coordenadas: ${_ubicacionSeleccionada!.latitude.toStringAsFixed(4)}, ${_ubicacionSeleccionada!.longitude.toStringAsFixed(4)}',
+                style: const TextStyle(color: Colors.blue),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrganizadorDropdown() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: DropdownButtonFormField<int>(
+        value: _organizadorSeleccionado,
+        hint: const Text('Selecciona un organizador*'),
+        items: _organizadores.map((org) {
+          return DropdownMenuItem<int>(
+            value: org['id'] as int,
+            child: Text(org['nombre'].toString()),
+          );
+        }).toList(),
+        onChanged: (int? value) => setState(() => _organizadorSeleccionado = value),
+        decoration: const InputDecoration(border: OutlineInputBorder()),
+        validator: (value) => value == null ? 'Selecciona un organizador' : null,
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(String tipo) {
+    return Container(
+      color: Colors.grey[200],
+      height: tipo == 'Logo' ? 80 : 120,
+      child: Center(child: Text('Imagen de $tipo no disponible')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Nuevo Evento'),
+        backgroundColor: Colors.blue[800],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _buildImageSection(),
+                    _buildTextField('Nombre del evento*', _nombreController),
+                    _buildDateField('Fecha de inicio*', _fechaInicio, true),
+                    _buildDateField('Fecha de término*', _fechaFin, false),
+                    _buildTextField('Capacidad*', _cupoController, maxLines: 1),
+                    _buildTextField('Descripción', _descripcionController, maxLines: 3),
+                    _buildTextField('Estado*', _estadoController, maxLines: 1),
+                    _buildTextField('Municipio*', _municipioController, maxLines: 1),
+                    _buildLocationField(),
+                    _buildOrganizadorDropdown(),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _guardarEvento,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue[800],
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text('GUARDAR EVENTO', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -169,189 +357,82 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     _portadaUrlController.dispose();
     _estadoController.dispose();
     _municipioController.dispose();
+    _direccionController.dispose();
     super.dispose();
+  }
+}
+
+// -------------------- PANTALLA DEL MAPA (Versión actualizada) --------------------
+class MapaUbicacion extends StatefulWidget {
+  final LatLng ubicacionInicial;
+  final String apiKey;
+
+  const MapaUbicacion({
+    required this.ubicacionInicial,
+    required this.apiKey,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<MapaUbicacion> createState() => _MapaUbicacionState();
+}
+
+class _MapaUbicacionState extends State<MapaUbicacion> {
+  late final MapController _mapController;
+  LatLng? _ubicacionSeleccionada;
+
+  @override
+  void initState() {
+    super.initState();
+    _mapController = MapController();
+    _ubicacionSeleccionada = widget.ubicacionInicial;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Agregar evento',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue,
-        centerTitle: true,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF162A87), Colors.white],
+        title: const Text('Selecciona la ubicación'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: () {
+              if (_ubicacionSeleccionada != null) {
+                Navigator.pop(context, _ubicacionSeleccionada);
+              }
+            },
           ),
+        ],
+      ),
+      body: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: _ubicacionSeleccionada!, 
+          initialZoom: 15.0,                    
+          onTap: (tapPosition, point) => setState(() => _ubicacionSeleccionada = point),
         ),
-        child:
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Center(
-                      child: Container(
-                        width: 400,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Agregar imagen o logo:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            TextField(
-                              controller: _logoUrlController,
-                              onChanged: (_) => setState(() {}),
-                              decoration: const InputDecoration(
-                                labelText: 'URL del logo',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                            if (_logoUrlController.text.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                child: Center(
-                                  child: Image.network(
-                                    _logoUrlController.text,
-                                    height: 80,
-                                    errorBuilder:
-                                        (_, __, ___) => const Text(
-                                          'No se pudo cargar la imagen',
-                                        ),
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Agregar imagen de portada:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            TextField(
-                              controller: _portadaUrlController,
-                              onChanged: (_) => setState(() {}),
-                              decoration: const InputDecoration(
-                                labelText: 'URL de portada',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                            if (_portadaUrlController.text.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                ),
-                                child: Center(
-                                  child: Image.network(
-                                    _portadaUrlController.text,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (_, __, ___) => const Text(
-                                          'No se pudo cargar la portada',
-                                        ),
-                                  ),
-                                ),
-                              ),
-                            _buildTextField(
-                              'Nombre del evento',
-                              _nombreController,
-                            ),
-                            _buildDatePicker('Fecha de inicio', true),
-                            _buildDatePicker('Fecha de termino', false),
-                            _buildTextField(
-                              'Capacidad',
-                              _cupoController,
-                              type: TextInputType.number,
-                            ),
-                            _buildTextField(
-                              'Descripción',
-                              _descripcionController,
-                              maxLines: 3,
-                            ),
-                            _buildTextField('Estado', _estadoController),
-                            _buildTextField('Municipio', _municipioController),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'Organizador:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            DropdownButton<int>(
-                              isExpanded: true,
-                              value: _organizadorSeleccionado,
-                              hint: const Text('Selecciona un organizador'),
-                              items:
-                                  _organizadores
-                                      .map<DropdownMenuItem<int>>(
-                                        (org) => DropdownMenuItem(
-                                          value: org['id'],
-                                          child: Text(org['nombre']),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _organizadorSeleccionado = value;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: _createEvent,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF3966CC),
-                                minimumSize: const Size(double.infinity, 48),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'Agregar',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Center(
-                              child: TextButton(
-                                style: TextButton.styleFrom(
-                                  backgroundColor: Colors.amber,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 8,
-                                  ),
-                                ),
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text(
-                                  'Volver',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token=${widget.apiKey}',
+            userAgentPackageName: 'com.example.app',
+          ),
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: _ubicacionSeleccionada!,
+                child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                width: 40,
+                height: 40,
+              ),
+            ],
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.my_location),
+        onPressed: () {
+          _mapController.move(_ubicacionSeleccionada!, _mapController.camera.zoom);
+        },
       ),
     );
   }
