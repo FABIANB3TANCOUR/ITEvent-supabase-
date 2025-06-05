@@ -1,1 +1,0 @@
- C:\\Users\\rdfh1\\Documents\\DB\\ITEvent-supabase-\\.dart_tool\\flutter_build\\3e534e89ff4b5144e640675c62dbc6ae\\dart_build_result.json: 

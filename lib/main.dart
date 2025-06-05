@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:itevent/screens/users/registro_alumno.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // ← NUEVO
 
 import 'screens/type_logins.dart';
@@ -107,10 +108,16 @@ class WelcomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  OutlinedButton(
+                  ElevatedButton(
                     onPressed: () {
-                      // Aquí iría la navegación a la pantalla de registro
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NuevoUsuarioScreen(),
+                        ),
+                      );
                     },
+
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
                       side: const BorderSide(color: Colors.indigo),

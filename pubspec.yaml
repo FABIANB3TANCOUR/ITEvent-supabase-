@@ -7,6 +7,9 @@ environment:
   sdk: ">=3.7.2 <4.0.0"
 
 dependencies:
+
+
+
   flutter:
     sdk: flutter
 
@@ -15,7 +18,8 @@ dependencies:
   flutter_map: ^8.1.1            # Mapa interactivo
   latlong2: ^0.9.0               # Manejo de coordenadas
   http: ^1.4.0                  # Para API de Mapbox
-
+  
+  
   # Dependencias UI/UX
   cupertino_icons: ^1.0.8        # Íconos iOS
   table_calendar: ^3.0.9         # Calendario (si lo usas)
