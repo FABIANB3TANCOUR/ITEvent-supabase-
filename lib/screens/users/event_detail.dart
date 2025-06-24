@@ -130,6 +130,7 @@ class _EventDetailUserState extends State<EventDetailUser> {
           SnackBar(content: Text('Error al registrar: $e')));
       }
     }
+    
   }
 
   Widget _buildMapaUbicacion() {
