@@ -32,21 +32,18 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
     matricula = prefs.getInt('matricula');
     if (matricula == null) return;
     try {
-      final data =
-          await supabase
-              .from('usuarios')
-              .select('''
-            matricula,
-            nombre,
-            apellido,
-            roles(nombre),
-            correo,
-            telefono,
-            foto_url,
-            nota
-          ''')
-              .eq('matricula', widget.matricula)
-              .maybeSingle();
+      final data = await supabase.from('usuarios').select('''
+        matricula,
+        nombre,
+        apellido,
+        roles(nombre),
+        correo,
+        telefono,
+        foto_url,
+        nota,
+        presentate,
+        autoriza_datos
+      ''').eq('matricula', widget.matricula).maybeSingle();
 
       setState(() {
         user = data;
@@ -62,8 +59,8 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
 
   @override
   Widget build(BuildContext context) {
-    final fullName =
-        '${user?['nombre'] ?? ''} ${user?['apellido'] ?? ''}'.trim();
+    final fullName = '${user?['nombre'] ?? ''} ${user?['apellido'] ?? ''}'.trim();
+    final bool autorizacion = user?['autoriza_datos'] == true;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -75,194 +72,202 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
         ),
         centerTitle: true,
       ),
-      body:
-          loading
-              ? const Center(child: CircularProgressIndicator())
-              : user == null
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : user == null
               ? const Center(child: Text('Usuario no encontrado'))
               : Column(
-                children: [
-                  // Cabecera azul
-
-                  // Bloque gris con avatar y datos
-                  Container(
-                    color: Colors.grey[900],
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 40,
-                          backgroundColor: Colors.white,
-                          backgroundImage:
-                              (user?['foto_url'] != null &&
-                                      (user!['foto_url'] as String).isNotEmpty)
-                                  ? NetworkImage(user!['foto_url'])
-                                  : null,
-                          child:
-                              (user?['foto_url'] == null ||
-                                      (user!['foto_url'] as String).isEmpty)
-                                  ? const Icon(Icons.person, size: 40)
-                                  : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                fullName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                user?['roles']['nombre'] ?? 'Sin rol',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                              if ((user?['correo'] ?? '').toString().isNotEmpty)
+                  children: [
+                    // Bloque gris con avatar y datos
+                    Container(
+                      color: Colors.grey[900],
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundColor: Colors.white,
+                            backgroundImage:
+                                (user?['foto_url'] != null &&
+                                        (user!['foto_url'] as String).isNotEmpty)
+                                    ? NetworkImage(user!['foto_url'])
+                                    : null,
+                            child: (user?['foto_url'] == null ||
+                                    (user!['foto_url'] as String).isEmpty)
+                                ? const Icon(Icons.person, size: 40)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Text(
-                                  user!['correo'],
+                                  fullName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  user?['roles']['nombre'] ?? 'Sin rol',
                                   style: const TextStyle(color: Colors.white),
                                 ),
-                              if ((user?['telefono'] ?? '')
-                                  .toString()
-                                  .isNotEmpty)
-                                Text(
-                                  'Tel: ${user!['telefono']}',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                            ],
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (_) => ChatPage(
-                                      remitenteId: matricula!,
-                                      destinatarioId: widget.matricula,
-                                    ),
-                              ),
-                            );
-                          },
-                          child: Column(
-                            children: const [
-                              Icon(Icons.mail_outline, color: Colors.white),
-                              SizedBox(height: 4),
-                              Text(
-                                'Mensaje',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const Divider(height: 1),
-
-                  // Notas personales (placeholder)
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Notas Personales',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(user?['nota'] ?? 'No hay notas'),
-                      ],
-                    ),
-                  ),
-
-                  const Divider(height: 1),
-
-                  // Sección de contacto
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8,
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder:
-                              (_) => AlertDialog(
-                                title: const Text('¿Eliminar perfil?'),
-                                content: const Text(
-                                  'Esta acción no se puede deshacer.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, false),
-                                    child: const Text('Cancelar'),
+                                if (autorizacion &&
+                                    (user?['correo'] ?? '').toString().isNotEmpty)
+                                  Text(
+                                    user!['correo'],
+                                    style: const TextStyle(color: Colors.white),
                                   ),
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, true),
-                                    child: const Text(
-                                      'Eliminar',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
+                                if (autorizacion &&
+                                    (user?['telefono'] ?? '').toString().isNotEmpty)
+                                  Text(
+                                    'Tel: ${user!['telefono']}',
+                                    style: const TextStyle(color: Colors.white),
                                   ),
-                                ],
-                              ),
-                        );
-
-                        if (confirm == true) {
-                          try {
-                            await supabase
-                                .from('usuarios')
-                                .delete()
-                                .eq('matricula', widget.matricula);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Perfil eliminado exitosamente',
+                              ],
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ChatPage(
+                                    remitenteId: matricula!,
+                                    destinatarioId: widget.matricula,
                                   ),
                                 ),
                               );
-                              Navigator.pop(
-                                context,
-                              ); // Regresa a la pantalla anterior
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error al eliminar: $e')),
-                            );
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.delete),
-                      label: const Text('Eliminar perfil'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
+                            },
+                            child: Column(
+                              children: const [
+                                Icon(Icons.mail_outline, color: Colors.white),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Mensaje',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
+
+                    const Divider(height: 1),
+
+                    // Presentación
+                    if ((user?['presentate'] ?? '').toString().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Presentación',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(user!['presentate']),
+                          ],
+                        ),
+                      ),
+
+                    // Notas personales
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Notas Personales',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(user?['nota'] ?? 'No hay notas'),
+                        ],
+                      ),
+                    ),
+
+                    const Divider(height: 1),
+
+                    // Botón eliminar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8,
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: const Text('¿Eliminar perfil?'),
+                              content: const Text(
+                                'Esta acción no se puede deshacer.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancelar'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text(
+                                    'Eliminar',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm == true) {
+                            try {
+                              await supabase
+                                  .from('usuarios')
+                                  .delete()
+                                  .eq('matricula', widget.matricula);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Perfil eliminado exitosamente'),
+                                  ),
+                                );
+                                Navigator.pop(context);
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error al eliminar: $e')),
+                              );
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.delete),
+                        label: const Text('Eliminar perfil'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2,
         selectedItemColor: Colors.blue,

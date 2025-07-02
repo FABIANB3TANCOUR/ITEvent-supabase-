@@ -28,14 +28,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final matricula = prefs.getInt('matricula');
     if (matricula == null) return;
 
-    final data =
-        await supabase
-            .from('usuarios')
-            .select(
-              'matricula, nombre, apellido, telefono, correo, foto_url, nota',
-            )
-            .eq('matricula', matricula)
-            .maybeSingle();
+    final data = await supabase
+        .from('usuarios')
+        .select(
+          'matricula, nombre, apellido, telefono, correo, foto_url, nota, autoriza_datos',
+        )
+        .eq('matricula', matricula)
+        .maybeSingle();
 
     setState(() {
       userData = data;
@@ -45,6 +44,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool autorizacionDatos = userData?['autoriza_datos'] == true;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
@@ -58,113 +59,121 @@ class _PerfilScreenState extends State<PerfilScreen> {
         ),
         centerTitle: true,
       ),
-      body:
-          loading
-              ? const Center(child: CircularProgressIndicator())
-              : userData == null
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : userData == null
               ? const Center(child: Text("No se encontró el perfil"))
               : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    width: 400,
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundImage:
-                              (userData!['foto_url'] != null &&
-                                      userData!['foto_url']
-                                          .toString()
-                                          .isNotEmpty)
-                                  ? NetworkImage(userData!['foto_url'])
-                                  : null,
-                          child:
-                              (userData!['foto_url'] == null ||
-                                      userData!['foto_url'].toString().isEmpty)
-                                  ? const Icon(Icons.person, size: 50)
-                                  : null,
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          userData!['nombre'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          userData!['apellido'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      width: 400,
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundImage: (userData!['foto_url'] != null &&
+                                    userData!['foto_url'].toString().isNotEmpty)
+                                ? NetworkImage(userData!['foto_url'])
+                                : null,
+                            child: (userData!['foto_url'] == null ||
+                                    userData!['foto_url'].toString().isEmpty)
+                                ? const Icon(Icons.person, size: 50)
+                                : null,
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          userData!['telefono'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          userData!['correo'] ?? '',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 20),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Tus notas:',
-                            style: TextStyle(
-                              fontSize: 16,
+                          const SizedBox(height: 20),
+                          Text(
+                            userData!['nombre'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          userData!['nota'] ?? 'Sin nota',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const EditarPerfilScreen(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.edit),
-                          label: const Text('Editar Perfil'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 48),
+                          const SizedBox(height: 10),
+                          Text(
+                            userData!['apellido'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+
+                          if (autorizacionDatos) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              userData!['telefono'] ?? '',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              userData!['correo'] ?? '',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ],
+
+                          const SizedBox(height: 20),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Tus notas:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            userData!['nota'] ?? 'Sin nota',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 20),
+
+                          //  modificacion para que los cambios de la edicion se mire 
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const EditarPerfilScreen(),
+                                ),
+                              );
+
+                              if (result == true) {
+                                setState(() {
+                                  loading = true;
+                                });
+                                await _cargarDatosPerfil();
+                              }
+                            },
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Editar Perfil'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 3,
         selectedItemColor: Colors.blue,
