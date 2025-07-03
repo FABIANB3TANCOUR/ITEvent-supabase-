@@ -20,11 +20,19 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final supabase = Supabase.instance.client;
   final TextEditingController _mensajeController = TextEditingController();
-  final ScrollController _scrollController = ScrollController(); // AQUÍ
+  final ScrollController _scrollController = ScrollController();
 
   List<Map<String, dynamic>> _mensajes = [];
   Map<int, String> _nombresUsuarios = {};
   RealtimeChannel? _canalMensajes;
+
+  // Diccionario local de malas palabras
+  final List<String> _palabrasProhibidas = [
+    'tonto', 'menso', 'pendejo', 'idiota', 'estupido', 'mierda', 'verga',
+    'estupida', 'imbecil', 'tarado', 'puto', 'puta', 'pito', 'chinga',
+    'chingada', 'vrg', 'maldita', 'perra', 'maldito', 'culero', 'culera',
+    'culo', 'zorra', 'pinche', 'puñetas', 'maricon', 'joto'
+  ];
 
   bool get soyAdmin => widget.adminId != null && widget.remitenteId == null;
 
@@ -48,10 +56,26 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
-    _canalMensajes?.unsubscribe(); // Cancela la suscripción Realtime
-    _mensajeController.dispose(); // Libera el TextEditingController
-    _scrollController.dispose(); // Libera el ScrollController
+    _canalMensajes?.unsubscribe();
+    _mensajeController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  // Función para censurar malas palabras
+  String _censurarTexto(String texto) {
+    String resultado = texto;
+    for (final palabra in _palabrasProhibidas) {
+      final regex = RegExp(
+        r'\b' + RegExp.escape(palabra) + r'\b',
+        caseSensitive: false,
+      );
+      resultado = resultado.replaceAllMapped(
+        regex,
+        (match) => '*' * match.group(0)!.length,
+      );
+    }
+    return resultado;
   }
 
   Future<void> _cargarUsuarios() async {
@@ -77,24 +101,20 @@ class _ChatPageState extends State<ChatPage> {
         .from('mensajes')
         .select()
         .order('fecha_envio', ascending: true);
-    ;
 
     setState(() {
-      _mensajes =
-          data.where((m) {
-            if (soyAdmin) {
-              return (m['admin_id'] == idYo &&
-                      m['destinatario_id'] == idOtro) ||
-                  (m['remitente_id'] == idOtro && m['admin_id'] == idYo);
-            } else if (widget.adminId != null) {
-              return (m['remitente_id'] == idYo && m['admin_id'] == idOtro) ||
-                  (m['admin_id'] == idOtro && m['destinatario_id'] == idYo);
-            } else {
-              return (m['remitente_id'] == idYo &&
-                      m['destinatario_id'] == idOtro) ||
-                  (m['remitente_id'] == idOtro && m['destinatario_id'] == idYo);
-            }
-          }).toList();
+      _mensajes = data.where((m) {
+        if (soyAdmin) {
+          return (m['admin_id'] == idYo && m['destinatario_id'] == idOtro) ||
+              (m['remitente_id'] == idOtro && m['admin_id'] == idYo);
+        } else if (widget.adminId != null) {
+          return (m['remitente_id'] == idYo && m['admin_id'] == idOtro) ||
+              (m['admin_id'] == idOtro && m['destinatario_id'] == idYo);
+        } else {
+          return (m['remitente_id'] == idYo && m['destinatario_id'] == idOtro) ||
+              (m['remitente_id'] == idOtro && m['destinatario_id'] == idYo);
+        }
+      }).toList();
     });
   }
 
@@ -109,21 +129,14 @@ class _ChatPageState extends State<ChatPage> {
           callback: (payload) {
             final nuevo = payload.newRecord;
 
-            final valido =
-                soyAdmin
-                    ? (nuevo['admin_id'] == idYo &&
-                            nuevo['destinatario_id'] == idOtro) ||
-                        (nuevo['remitente_id'] == idOtro &&
-                            nuevo['admin_id'] == idYo)
-                    : widget.adminId != null
-                    ? (nuevo['remitente_id'] == idYo &&
-                            nuevo['admin_id'] == idOtro) ||
-                        (nuevo['admin_id'] == idOtro &&
-                            nuevo['destinatario_id'] == idYo)
-                    : (nuevo['remitente_id'] == idYo &&
-                            nuevo['destinatario_id'] == idOtro) ||
-                        (nuevo['remitente_id'] == idOtro &&
-                            nuevo['destinatario_id'] == idYo);
+            final valido = soyAdmin
+                ? (nuevo['admin_id'] == idYo && nuevo['destinatario_id'] == idOtro) ||
+                    (nuevo['remitente_id'] == idOtro && nuevo['admin_id'] == idYo)
+                : widget.adminId != null
+                    ? (nuevo['remitente_id'] == idYo && nuevo['admin_id'] == idOtro) ||
+                        (nuevo['admin_id'] == idOtro && nuevo['destinatario_id'] == idYo)
+                    : (nuevo['remitente_id'] == idYo && nuevo['destinatario_id'] == idOtro) ||
+                        (nuevo['remitente_id'] == idOtro && nuevo['destinatario_id'] == idYo);
 
             if (!valido || _mensajes.any((m) => m['id'] == nuevo['id'])) return;
 
@@ -143,8 +156,10 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _enviarMensaje() async {
-    final texto = _mensajeController.text.trim();
-    if (texto.isEmpty) return;
+    final textoOriginal = _mensajeController.text.trim();
+    if (textoOriginal.isEmpty) return;
+
+    final textoCensurado = _censurarTexto(textoOriginal);
 
     Map<String, dynamic> nuevoMensaje;
 
@@ -152,19 +167,19 @@ class _ChatPageState extends State<ChatPage> {
       nuevoMensaje = {
         'admin_id': idYo,
         'destinatario_id': idOtro,
-        'contenido': texto,
+        'contenido': textoCensurado,
       };
     } else if (widget.adminId != null) {
       nuevoMensaje = {
         'remitente_id': idYo,
         'admin_id': idOtro,
-        'contenido': texto,
+        'contenido': textoCensurado,
       };
     } else {
       nuevoMensaje = {
         'remitente_id': idYo,
         'destinatario_id': idOtro,
-        'contenido': texto,
+        'contenido': textoCensurado,
       };
     }
 
@@ -191,29 +206,24 @@ class _ChatPageState extends State<ChatPage> {
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-
               padding: const EdgeInsets.all(12),
               itemCount: _mensajes.length,
               itemBuilder: (context, index) {
                 final msg = _mensajes[index];
-                final bool esMio =
-                    soyAdmin
-                        ? msg['admin_id'] == idYo
-                        : msg['remitente_id'] == idYo;
+                final bool esMio = soyAdmin
+                    ? msg['admin_id'] == idYo
+                    : msg['remitente_id'] == idYo;
 
-                final String nombre =
-                    esMio
-                        ? 'Yo'
-                        : (_nombresUsuarios[msg['remitente_id']] ?? 'Admin');
+                final String nombre = esMio
+                    ? 'Yo'
+                    : (_nombresUsuarios[msg['remitente_id']] ?? 'Admin');
 
                 return Align(
-                  alignment:
-                      esMio ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: esMio ? Alignment.centerRight : Alignment.centerLeft,
                   child: Column(
-                    crossAxisAlignment:
-                        esMio
-                            ? CrossAxisAlignment.end
-                            : CrossAxisAlignment.start,
+                    crossAxisAlignment: esMio
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
                     children: [
                       Text(
                         nombre,
@@ -226,14 +236,13 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         decoration: BoxDecoration(
-                          color:
-                              esMio
-                                  ? const Color(0xFF3966CC)
-                                  : const Color(0xFFE0E0E0),
+                          color: esMio
+                              ? const Color(0xFF3966CC)
+                              : const Color(0xFFE0E0E0),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          msg['contenido'],
+                          _censurarTexto(msg['contenido']),
                           style: TextStyle(
                             color: esMio ? Colors.white : Colors.black,
                           ),

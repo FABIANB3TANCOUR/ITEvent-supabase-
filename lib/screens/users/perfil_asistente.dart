@@ -82,9 +82,6 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
               ? const Center(child: Text('Usuario no encontrado'))
               : Column(
                 children: [
-                  // Cabecera azul
-
-                  // Bloque gris con avatar y datos
                   Container(
                     color: Colors.grey[900],
                     padding: const EdgeInsets.symmetric(
@@ -173,7 +170,6 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
 
                   const Divider(height: 1),
 
-                  // Notas personales (placeholder)
                   Padding(
                     padding: EdgeInsets.all(16),
                     child: Column(
@@ -194,71 +190,92 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
 
                   const Divider(height: 1),
 
-                  // Sección de contacto
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8,
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder:
-                              (_) => AlertDialog(
-                                title: const Text('¿Eliminar perfil?'),
-                                content: const Text(
-                                  'Esta acción no se puede deshacer.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, false),
-                                    child: const Text('Cancelar'),
-                                  ),
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, true),
-                                    child: const Text(
-                                      'Eliminar',
-                                      style: TextStyle(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder:
+                                    (_) => AlertDialog(
+                                      title: const Text('¿Eliminar perfil?'),
+                                      content: const Text(
+                                        'Esta acción no se puede deshacer.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed:
+                                              () => Navigator.pop(context, false),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        TextButton(
+                                          onPressed:
+                                              () => Navigator.pop(context, true),
+                                          child: const Text(
+                                            'Eliminar',
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                        );
+                              );
 
-                        if (confirm == true) {
-                          try {
-                            await supabase
-                                .from('usuarios')
-                                .delete()
-                                .eq('matricula', widget.matricula);
-                            if (mounted) {
+                              if (confirm == true) {
+                                try {
+                                  await supabase
+                                      .from('usuarios')
+                                      .delete()
+                                      .eq('matricula', widget.matricula);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Perfil eliminado exitosamente',
+                                        ),
+                                      ),
+                                    );
+                                    Navigator.pop(
+                                      context,
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error al eliminar: $e')),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.delete),
+                            label: const Text('Eliminar perfil'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text(
-                                    'Perfil eliminado exitosamente',
-                                  ),
+                                  content: Text('Se ha reportado esta cuenta.'),
                                 ),
                               );
-                              Navigator.pop(
-                                context,
-                              ); // Regresa a la pantalla anterior
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error al eliminar: $e')),
-                            );
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.delete),
-                      label: const Text('Eliminar perfil'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
+                              // Aquí puedes agregar lógica para registrar el reporte
+                            },
+                            icon: const Icon(Icons.flag),
+                            label: const Text('Reportar cuenta'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

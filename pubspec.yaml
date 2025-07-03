@@ -8,8 +8,6 @@ environment:
 
 dependencies:
 
-
-
   flutter:
     sdk: flutter
 
@@ -17,17 +15,19 @@ dependencies:
   supabase_flutter: ^2.0.0       # Para Supabase
   flutter_map: ^8.1.1            # Mapa interactivo
   latlong2: ^0.9.0               # Manejo de coordenadas
-  http: ^1.4.0                  # Para API de Mapbox
-  
+  http: ^1.4.0                   # Para API de Mapbox
   
   # Dependencias UI/UX
   cupertino_icons: ^1.0.8        # Íconos iOS
   table_calendar: ^3.0.9         # Calendario (si lo usas)
 
   # Opcionales (recomendadas)
-  permission_handler: ^12.0.0+1    # Para permisos de ubicación
+  permission_handler: ^12.0.0+1  # Para permisos de ubicación
   mapbox_search: ^4.3.1          # Autocompletado de direcciones
   flutter_dotenv: ^5.1.0         # Para manejar API Keys (opcional)
+
+  # 📌 Lo que hacía falta:
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
@@ -36,5 +36,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
- 

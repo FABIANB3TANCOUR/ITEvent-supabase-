@@ -56,19 +56,25 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar la actividad: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar la actividad: $e')),
+        );
+      }
     }
 
-    setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _updateActividad() async {
     if (_fecha == null || _horaInicio == null || _horaFin == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa fecha y horario.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Completa fecha y horario.')),
+        );
+      }
       return;
     }
 
@@ -97,9 +103,11 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
+      }
     }
   }
 
@@ -121,8 +129,9 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
               ? (_horaInicio ?? TimeOfDay.now())
               : (_horaFin ?? TimeOfDay.now()),
     );
-    if (picked != null)
+    if (picked != null) {
       setState(() => esInicio ? _horaInicio = picked : _horaFin = picked);
+    }
   }
 
   Widget _buildTextField(
@@ -241,8 +250,7 @@ class _EditActividadScreenState extends State<EditActividadScreen> {
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    _horaInicio?.format(context) ??
-                                        'No definido',
+                                    _horaInicio?.format(context) ?? 'No definido',
                                   ),
                                 ],
                               ),
