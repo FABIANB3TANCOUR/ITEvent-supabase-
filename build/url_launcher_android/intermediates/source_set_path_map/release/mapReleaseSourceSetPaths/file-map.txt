@@ -21,8 +21,8 @@ io.flutter.plugins.urllauncher.url_launcher_android-jetified-annotation-experime
 io.flutter.plugins.urllauncher.url_launcher_android-core-runtime-2.2.0-20 C:\Users\yolox\.gradle\caches\8.10.2\transforms\ff849810dfe34a0ab790c402787c149e\transformed\core-runtime-2.2.0\res
 io.flutter.plugins.urllauncher.url_launcher_android-main-21 C:\Users\yolox\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.16\android\src\main\res
 io.flutter.plugins.urllauncher.url_launcher_android-release-22 C:\Users\yolox\AppData\Local\Pub\Cache\hosted\pub.dev\url_launcher_android-6.3.16\android\src\release\res
-io.flutter.plugins.urllauncher.url_launcher_android-pngs-23 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\url_launcher_android\generated\res\pngs\release
-io.flutter.plugins.urllauncher.url_launcher_android-resValues-24 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\url_launcher_android\generated\res\resValues\release
-io.flutter.plugins.urllauncher.url_launcher_android-mergeReleaseResources-25 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\url_launcher_android\intermediates\incremental\release\mergeReleaseResources\merged.dir
-io.flutter.plugins.urllauncher.url_launcher_android-mergeReleaseResources-26 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\url_launcher_android\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-io.flutter.plugins.urllauncher.url_launcher_android-release-27 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\url_launcher_android\intermediates\merged_res\release\mergeReleaseResources
+io.flutter.plugins.urllauncher.url_launcher_android-pngs-23 C:\github\ITEvent-supabase-\build\url_launcher_android\generated\res\pngs\release
+io.flutter.plugins.urllauncher.url_launcher_android-resValues-24 C:\github\ITEvent-supabase-\build\url_launcher_android\generated\res\resValues\release
+io.flutter.plugins.urllauncher.url_launcher_android-mergeReleaseResources-25 C:\github\ITEvent-supabase-\build\url_launcher_android\intermediates\incremental\release\mergeReleaseResources\merged.dir
+io.flutter.plugins.urllauncher.url_launcher_android-mergeReleaseResources-26 C:\github\ITEvent-supabase-\build\url_launcher_android\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+io.flutter.plugins.urllauncher.url_launcher_android-release-27 C:\github\ITEvent-supabase-\build\url_launcher_android\intermediates\merged_res\release\mergeReleaseResources

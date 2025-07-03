@@ -5,6 +5,7 @@ import 'package:itevent/screens/users/main.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:itevent/services/email_services.dart';
 
 class EventDetailUser extends StatefulWidget {
   final int eventId;
@@ -17,6 +18,8 @@ class EventDetailUser extends StatefulWidget {
 
 class _EventDetailUserState extends State<EventDetailUser> {
   final supabase = Supabase.instance.client;
+  final emailService = EmailService('https://bsiepzgutwsmbeftyrdd.supabase.co/functions/v1/notificaciones');
+
   static const String _mapboxApiKey = 'pk.eyJ1IjoidGhlbWFtaXRhczQzIiwiYSI6ImNtYmlpZWV0ZzA2MWUybXB6NDk4eGU3ZDIifQ.g2P3tNXrG58VBYiOL8Ob1Q';
 
   Map<String, dynamic>? event;
@@ -105,32 +108,63 @@ class _EventDetailUserState extends State<EventDetailUser> {
   }
 
   Future<void> _registrarse() async {
-    if (matricula == null) return;
+   if (matricula == null) return;
 
-    try {
-      await supabase.from('registros').insert({
-        'matricula': matricula,
-        'id_evento': widget.eventId,
-      });
+  try {
+    // Insertar el registro en la tabla
+    await supabase.from('registros').insert({
+      'matricula': matricula,
+      'id_evento': widget.eventId,
+    });
 
-      if (mounted) {
+    // Obtener correo del usuario
+    final userData = await supabase
+        .from('usuarios')
+        .select('correo, nombre')
+        .eq('matricula', matricula!)
+        .maybeSingle();
+
+    final correo = userData?['correo'];
+    final nombre = userData?['nombre'];
+    final nombreEvento = event?['nombre_evento'] ?? 'Evento';
+
+    // Enviar correo solo si hay correo válido
+    if (correo != null && correo.contains('@')) {
+      final enviado = await emailService.sendEmail(
+        to: correo,
+        subject: 'Registro confirmado a "$nombreEvento"',
+        htmlContent: '''
+          <p>Hola $nombre 👋</p>
+          <p>Te has registrado exitosamente al evento: <strong>$nombreEvento</strong>.</p>
+          <p>¡Gracias por usar nuestra app!</p>
+        ''',
+      );
+
+      if (!enviado && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registro exitoso al evento')),
+          const SnackBar(content: Text('Registro exitoso, pero error al enviar correo.')),
         );
-
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const EventScreen()),
-          (Route<dynamic> route) => false,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al registrar: $e')));
       }
     }
-    
+
+    // Mostrar mensaje y navegar
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registro exitoso al evento')),
+      );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const EventScreen()),
+        (Route<dynamic> route) => false,
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al registrar: $e')),
+      );
+    }
+  }
   }
 
   Widget _buildMapaUbicacion() {

@@ -20,8 +20,8 @@ com.llfbandit.app_links-jetified-annotation-experimental-1.4.0-18 C:\Users\yolox
 com.llfbandit.app_links-core-runtime-2.2.0-19 C:\Users\yolox\.gradle\caches\8.10.2\transforms\ff849810dfe34a0ab790c402787c149e\transformed\core-runtime-2.2.0\res
 com.llfbandit.app_links-main-20 C:\Users\yolox\AppData\Local\Pub\Cache\hosted\pub.dev\app_links-6.4.0\android\src\main\res
 com.llfbandit.app_links-release-21 C:\Users\yolox\AppData\Local\Pub\Cache\hosted\pub.dev\app_links-6.4.0\android\src\release\res
-com.llfbandit.app_links-pngs-22 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\generated\res\pngs\release
-com.llfbandit.app_links-resValues-23 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\generated\res\resValues\release
-com.llfbandit.app_links-mergeReleaseResources-24 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\incremental\release\mergeReleaseResources\merged.dir
-com.llfbandit.app_links-mergeReleaseResources-25 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-com.llfbandit.app_links-release-26 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\merged_res\release\mergeReleaseResources
+com.llfbandit.app_links-pngs-22 C:\github\ITEvent-supabase-\build\app_links\generated\res\pngs\release
+com.llfbandit.app_links-resValues-23 C:\github\ITEvent-supabase-\build\app_links\generated\res\resValues\release
+com.llfbandit.app_links-mergeReleaseResources-24 C:\github\ITEvent-supabase-\build\app_links\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.llfbandit.app_links-mergeReleaseResources-25 C:\github\ITEvent-supabase-\build\app_links\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.llfbandit.app_links-release-26 C:\github\ITEvent-supabase-\build\app_links\intermediates\merged_res\release\mergeReleaseResources

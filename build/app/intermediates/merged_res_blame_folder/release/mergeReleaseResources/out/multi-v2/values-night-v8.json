@@ -21,7 +21,7 @@
                     }
                 },
                 {
-                    "source": "C:\\Users\\yolox\\OneDrive\\Documentos\\ITEvent-supabase\\android\\app\\src\\main\\res\\values-night\\styles.xml",
+                    "source": "C:\\github\\ITEvent-supabase-\\android\\app\\src\\main\\res\\values-night\\styles.xml",
                     "from": {
                         "startLines": "3,14",
                         "startColumns": "4,4",

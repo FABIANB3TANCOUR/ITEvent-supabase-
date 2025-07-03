@@ -35,8 +35,8 @@ io.flutter.plugins.sharedpreferences.shared_preferences_android-jetified-annotat
 io.flutter.plugins.sharedpreferences.shared_preferences_android-core-runtime-2.2.0-34 C:\Users\yolox\.gradle\caches\8.10.2\transforms\ff849810dfe34a0ab790c402787c149e\transformed\core-runtime-2.2.0\res
 io.flutter.plugins.sharedpreferences.shared_preferences_android-main-35 C:\Users\yolox\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.4.10\android\src\main\res
 io.flutter.plugins.sharedpreferences.shared_preferences_android-release-36 C:\Users\yolox\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.4.10\android\src\release\res
-io.flutter.plugins.sharedpreferences.shared_preferences_android-pngs-37 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\shared_preferences_android\generated\res\pngs\release
-io.flutter.plugins.sharedpreferences.shared_preferences_android-resValues-38 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\shared_preferences_android\generated\res\resValues\release
-io.flutter.plugins.sharedpreferences.shared_preferences_android-mergeReleaseResources-39 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\shared_preferences_android\intermediates\incremental\release\mergeReleaseResources\merged.dir
-io.flutter.plugins.sharedpreferences.shared_preferences_android-mergeReleaseResources-40 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\shared_preferences_android\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-io.flutter.plugins.sharedpreferences.shared_preferences_android-release-41 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\shared_preferences_android\intermediates\merged_res\release\mergeReleaseResources
+io.flutter.plugins.sharedpreferences.shared_preferences_android-pngs-37 C:\github\ITEvent-supabase-\build\shared_preferences_android\generated\res\pngs\release
+io.flutter.plugins.sharedpreferences.shared_preferences_android-resValues-38 C:\github\ITEvent-supabase-\build\shared_preferences_android\generated\res\resValues\release
+io.flutter.plugins.sharedpreferences.shared_preferences_android-mergeReleaseResources-39 C:\github\ITEvent-supabase-\build\shared_preferences_android\intermediates\incremental\release\mergeReleaseResources\merged.dir
+io.flutter.plugins.sharedpreferences.shared_preferences_android-mergeReleaseResources-40 C:\github\ITEvent-supabase-\build\shared_preferences_android\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+io.flutter.plugins.sharedpreferences.shared_preferences_android-release-41 C:\github\ITEvent-supabase-\build\shared_preferences_android\intermediates\merged_res\release\mergeReleaseResources

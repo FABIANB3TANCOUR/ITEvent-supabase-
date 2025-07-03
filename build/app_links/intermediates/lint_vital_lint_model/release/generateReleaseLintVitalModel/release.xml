@@ -3,11 +3,11 @@
     package="com.llfbandit.app_links"
     minSdkVersion="19"
     targetSdkVersion="19"
-    mergedManifest="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml"
-    manifestMergeReport="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\outputs\logs\manifest-merger-release-report.txt"
-    proguardFiles="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\default_proguard_files\global\proguard-android.txt-8.7.0"
+    mergedManifest="C:\github\ITEvent-supabase-\build\app_links\intermediates\merged_manifest\release\processReleaseManifest\AndroidManifest.xml"
+    manifestMergeReport="C:\github\ITEvent-supabase-\build\app_links\outputs\logs\manifest-merger-release-report.txt"
+    proguardFiles="C:\github\ITEvent-supabase-\build\app_links\intermediates\default_proguard_files\global\proguard-android.txt-8.7.0"
     consumerProguardFiles="proguard.txt"
-    partialResultsDir="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out">
+    partialResultsDir="C:\github\ITEvent-supabase-\build\app_links\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out">
   <buildFeatures
       namespacing="REQUIRED"/>
   <sourceProviders>
@@ -22,11 +22,11 @@
   <testFixturesSourceProviders>
   </testFixturesSourceProviders>
   <artifact
-      classOutputs="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\javac\release\compileReleaseJavaWithJavac\classes;C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\compile_r_class_jar\release\generateReleaseRFile\R.jar"
+      classOutputs="C:\github\ITEvent-supabase-\build\app_links\intermediates\javac\release\compileReleaseJavaWithJavac\classes;C:\github\ITEvent-supabase-\build\app_links\intermediates\compile_r_class_jar\release\generateReleaseRFile\R.jar"
       type="MAIN"
       applicationId="com.llfbandit.app_links"
-      generatedSourceFolders="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\generated\ap_generated_sources\release\out"
-      generatedResourceFolders="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\generated\res\resValues\release"
+      generatedSourceFolders="C:\github\ITEvent-supabase-\build\app_links\generated\ap_generated_sources\release\out"
+      generatedResourceFolders="C:\github\ITEvent-supabase-\build\app_links\generated\res\resValues\release"
       desugaredMethodsFiles="C:\Users\yolox\.gradle\caches\8.10.2\transforms\845d9227b0aa7afd95c9677206a478c7\transformed\D8BackportedDesugaredMethods.txt">
   </artifact>
 </variant>

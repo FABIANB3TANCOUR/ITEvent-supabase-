@@ -5,7 +5,7 @@
     type="LIBRARY"
     maven="io.flutter.plugins.sharedpreferences:shared_preferences_android:1.0-SNAPSHOT"
     agpVersion="8.7.0"
-    buildFolder="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\shared_preferences_android"
+    buildFolder="C:\github\ITEvent-supabase-\build\shared_preferences_android"
     bootClassPath="C:\Users\yolox\AppData\Local\Android\sdk\platforms\android-35\android.jar;C:\Users\yolox\AppData\Local\Android\sdk\build-tools\34.0.0\core-lambda-stubs.jar"
     javaSourceLevel="11"
     compileTarget="android-35"

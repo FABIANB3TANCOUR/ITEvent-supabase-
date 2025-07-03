@@ -20,8 +20,8 @@ com.baseflow.permissionhandler.permission_handler_android-jetified-annotation-ex
 com.baseflow.permissionhandler.permission_handler_android-core-runtime-2.2.0-19 C:\Users\yolox\.gradle\caches\8.10.2\transforms\ff849810dfe34a0ab790c402787c149e\transformed\core-runtime-2.2.0\res
 com.baseflow.permissionhandler.permission_handler_android-main-20 C:\Users\yolox\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-13.0.1\android\src\main\res
 com.baseflow.permissionhandler.permission_handler_android-release-21 C:\Users\yolox\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-13.0.1\android\src\release\res
-com.baseflow.permissionhandler.permission_handler_android-pngs-22 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\permission_handler_android\generated\res\pngs\release
-com.baseflow.permissionhandler.permission_handler_android-resValues-23 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\permission_handler_android\generated\res\resValues\release
-com.baseflow.permissionhandler.permission_handler_android-mergeReleaseResources-24 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\permission_handler_android\intermediates\incremental\release\mergeReleaseResources\merged.dir
-com.baseflow.permissionhandler.permission_handler_android-mergeReleaseResources-25 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\permission_handler_android\intermediates\incremental\release\mergeReleaseResources\stripped.dir
-com.baseflow.permissionhandler.permission_handler_android-release-26 C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\permission_handler_android\intermediates\merged_res\release\mergeReleaseResources
+com.baseflow.permissionhandler.permission_handler_android-pngs-22 C:\github\ITEvent-supabase-\build\permission_handler_android\generated\res\pngs\release
+com.baseflow.permissionhandler.permission_handler_android-resValues-23 C:\github\ITEvent-supabase-\build\permission_handler_android\generated\res\resValues\release
+com.baseflow.permissionhandler.permission_handler_android-mergeReleaseResources-24 C:\github\ITEvent-supabase-\build\permission_handler_android\intermediates\incremental\release\mergeReleaseResources\merged.dir
+com.baseflow.permissionhandler.permission_handler_android-mergeReleaseResources-25 C:\github\ITEvent-supabase-\build\permission_handler_android\intermediates\incremental\release\mergeReleaseResources\stripped.dir
+com.baseflow.permissionhandler.permission_handler_android-release-26 C:\github\ITEvent-supabase-\build\permission_handler_android\intermediates\merged_res\release\mergeReleaseResources

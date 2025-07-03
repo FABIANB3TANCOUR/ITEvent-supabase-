@@ -410,10 +410,6 @@ yet_another_json_isolate
 3.0
 file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/yet_another_json_isolate-2.1.0/
 file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/yet_another_json_isolate-2.1.0/lib/
-itevent
-3.7
-file:///C:/Users/yolox/OneDrive/Documentos/ITEvent-supabase/
-file:///C:/Users/yolox/OneDrive/Documentos/ITEvent-supabase/lib/
 sky_engine
 3.7
 file:///C:/dev/flutter/bin/cache/pkg/sky_engine/
@@ -430,4 +426,8 @@ flutter_web_plugins
 3.7
 file:///C:/dev/flutter/packages/flutter_web_plugins/
 file:///C:/dev/flutter/packages/flutter_web_plugins/lib/
+itevent
+3.7
+file:///C:/github/ITEvent-supabase-/
+file:///C:/github/ITEvent-supabase-/lib/
 2

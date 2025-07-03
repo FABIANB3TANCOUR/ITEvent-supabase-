@@ -1,13 +1,13 @@
 <libraries>
   <library
-      name="__local_aars__:C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app\intermediates\flutter\release\libs.jar:unspecified@jar"
-      jars="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app\intermediates\flutter\release\libs.jar"
-      resolved="__local_aars__:C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app\intermediates\flutter\release\libs.jar:unspecified"/>
+      name="__local_aars__:C:\github\ITEvent-supabase-\build\app\intermediates\flutter\release\libs.jar:unspecified@jar"
+      jars="C:\github\ITEvent-supabase-\build\app\intermediates\flutter\release\libs.jar"
+      resolved="__local_aars__:C:\github\ITEvent-supabase-\build\app\intermediates\flutter\release\libs.jar:unspecified"/>
   <library
       name=":@@:shared_preferences_android::release"
       jars="C:\Users\yolox\.gradle\caches\8.10.2\transforms\40a9fd000dbaecd97b2da8856726cfb5\transformed\out\jars\classes.jar;C:\Users\yolox\.gradle\caches\8.10.2\transforms\40a9fd000dbaecd97b2da8856726cfb5\transformed\out\jars\libs\R.jar"
       resolved="io.flutter.plugins.sharedpreferences:shared_preferences_android:1.0-SNAPSHOT"
-      partialResultsDir="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\shared_preferences_android\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
+      partialResultsDir="C:\github\ITEvent-supabase-\build\shared_preferences_android\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
       folder="C:\Users\yolox\.gradle\caches\8.10.2\transforms\40a9fd000dbaecd97b2da8856726cfb5\transformed\out"
       manifest="AndroidManifest.xml"
       resFolder="res"
@@ -25,7 +25,7 @@
       name=":@@:app_links::release"
       jars="C:\Users\yolox\.gradle\caches\8.10.2\transforms\a58f9b9606cccd8695590a2837c2b2ff\transformed\out\jars\classes.jar;C:\Users\yolox\.gradle\caches\8.10.2\transforms\a58f9b9606cccd8695590a2837c2b2ff\transformed\out\jars\libs\R.jar"
       resolved="com.llfbandit.app_links:app_links:1.0"
-      partialResultsDir="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\app_links\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
+      partialResultsDir="C:\github\ITEvent-supabase-\build\app_links\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
       folder="C:\Users\yolox\.gradle\caches\8.10.2\transforms\a58f9b9606cccd8695590a2837c2b2ff\transformed\out"
       manifest="AndroidManifest.xml"
       resFolder="res"
@@ -39,7 +39,7 @@
       name=":@@:path_provider_android::release"
       jars="C:\Users\yolox\.gradle\caches\8.10.2\transforms\0168eb14f37fd838e8961f0eba95c361\transformed\out\jars\classes.jar;C:\Users\yolox\.gradle\caches\8.10.2\transforms\0168eb14f37fd838e8961f0eba95c361\transformed\out\jars\libs\R.jar"
       resolved="io.flutter.plugins.pathprovider:path_provider_android:1.0-SNAPSHOT"
-      partialResultsDir="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\path_provider_android\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
+      partialResultsDir="C:\github\ITEvent-supabase-\build\path_provider_android\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
       folder="C:\Users\yolox\.gradle\caches\8.10.2\transforms\0168eb14f37fd838e8961f0eba95c361\transformed\out"
       manifest="AndroidManifest.xml"
       resFolder="res"
@@ -53,7 +53,7 @@
       name=":@@:permission_handler_android::release"
       jars="C:\Users\yolox\.gradle\caches\8.10.2\transforms\285279143a9e946b7fc86a8f76b2f08b\transformed\out\jars\classes.jar;C:\Users\yolox\.gradle\caches\8.10.2\transforms\285279143a9e946b7fc86a8f76b2f08b\transformed\out\jars\libs\R.jar"
       resolved="com.baseflow.permissionhandler:permission_handler_android:1.0"
-      partialResultsDir="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\permission_handler_android\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
+      partialResultsDir="C:\github\ITEvent-supabase-\build\permission_handler_android\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
       folder="C:\Users\yolox\.gradle\caches\8.10.2\transforms\285279143a9e946b7fc86a8f76b2f08b\transformed\out"
       manifest="AndroidManifest.xml"
       resFolder="res"
@@ -67,7 +67,7 @@
       name=":@@:url_launcher_android::release"
       jars="C:\Users\yolox\.gradle\caches\8.10.2\transforms\36ceda2cb97e6e506c396e590963bee1\transformed\out\jars\classes.jar;C:\Users\yolox\.gradle\caches\8.10.2\transforms\36ceda2cb97e6e506c396e590963bee1\transformed\out\jars\libs\R.jar"
       resolved="io.flutter.plugins.urllauncher:url_launcher_android:1.0-SNAPSHOT"
-      partialResultsDir="C:\Users\yolox\OneDrive\Documentos\ITEvent-supabase\build\url_launcher_android\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
+      partialResultsDir="C:\github\ITEvent-supabase-\build\url_launcher_android\intermediates\lint_vital_partial_results\release\lintVitalAnalyzeRelease\out"
       folder="C:\Users\yolox\.gradle\caches\8.10.2\transforms\36ceda2cb97e6e506c396e590963bee1\transformed\out"
       manifest="AndroidManifest.xml"
       resFolder="res"
