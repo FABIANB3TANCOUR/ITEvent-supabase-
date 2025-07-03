@@ -19,6 +19,10 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
   final _fotoUrlController = TextEditingController();
   final _matriculaController = TextEditingController();
   final _notaController = TextEditingController();
+  final _presentateController = TextEditingController();
+  final _redesController = TextEditingController();
+
+  bool _autorizacionDatos = false;
 
   Future<void> _registrarUsuario() async {
     final nombre = _nombreController.text.trim();
@@ -29,6 +33,8 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
     final fotoUrl = _fotoUrlController.text.trim();
     final matricula = int.tryParse(_matriculaController.text.trim());
     final nota = _notaController.text.trim();
+    final presentate = _presentateController.text.trim();
+    final redesSociales = _redesController.text.trim();
 
     if (nombre.isEmpty ||
         apellido.isEmpty ||
@@ -51,7 +57,10 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
         'foto_url': fotoUrl.isNotEmpty ? fotoUrl : null,
         'matricula': matricula,
         'nota': nota.isNotEmpty ? nota : null,
-        // 'rol_id': NO se incluye para dejar el valor por defecto (1)
+        'presentate': presentate.isNotEmpty ? presentate : null,
+        'autoriza_datos': _autorizacionDatos,
+        'redes_sociales': redesSociales.isNotEmpty ? redesSociales : null,
+        // 'rol_id': se deja con valor por defecto
       });
 
       if (mounted) {
@@ -61,9 +70,9 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al registrar: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al registrar: $e')),
+      );
     }
   }
 
@@ -72,6 +81,7 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
     TextEditingController controller, {
     TextInputType type = TextInputType.text,
     bool obscure = false,
+    int maxLines = 1,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -79,6 +89,7 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
         controller: controller,
         keyboardType: type,
         obscureText: obscure,
+        maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -97,6 +108,8 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
     _fotoUrlController.dispose();
     _matriculaController.dispose();
     _notaController.dispose();
+    _presentateController.dispose();
+    _redesController.dispose();
     super.dispose();
   }
 
@@ -120,18 +133,42 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
               type: TextInputType.emailAddress,
             ),
             _buildTextField(
-              'Telefono',
+              'Teléfono',
               _telefonoController,
               type: TextInputType.phone,
             ),
-            _buildTextField('Contraseña', _passwordController, obscure: true),
             _buildTextField(
-              'Matricula',
+              'Contraseña',
+              _passwordController,
+              obscure: true,
+            ),
+            _buildTextField(
+              'Matrícula',
               _matriculaController,
               type: TextInputType.number,
             ),
             _buildTextField('URL de foto (opcional)', _fotoUrlController),
             _buildTextField('Nota (opcional)', _notaController),
+            _buildTextField(
+              'Preséntate (carrera, ciudad, edad...)',
+              _presentateController,
+              maxLines: 3,
+            ),
+            CheckboxListTile(
+              title: const Text(
+                  'Autorizo compartir mis datos personales (teléfono, correo)'),
+              value: _autorizacionDatos,
+              onChanged: (value) {
+                setState(() {
+                  _autorizacionDatos = value ?? false;
+                });
+              },
+            ),
+            _buildTextField(
+              'Redes sociales (link opcional)',
+              _redesController,
+              type: TextInputType.url,
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _registrarUsuario,
