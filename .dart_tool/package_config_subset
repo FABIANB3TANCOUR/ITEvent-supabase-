@@ -107,9 +107,9 @@ http_parser
 file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/http_parser-4.1.2/
 file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/http_parser-4.1.2/lib/
 intl
-3.3
-file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.20.2/
-file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.20.2/lib/
+2.12
+file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.18.1/
+file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.18.1/lib/
 json_annotation
 3.0
 file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/json_annotation-4.9.0/
@@ -323,9 +323,9 @@ supabase_flutter
 file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/supabase_flutter-2.9.0/
 file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/supabase_flutter-2.9.0/lib/
 table_calendar
-3.0
-file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/table_calendar-3.2.0/
-file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/table_calendar-3.2.0/lib/
+2.12
+file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/table_calendar-3.0.9/
+file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/table_calendar-3.0.9/lib/
 term_glyph
 3.1
 file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/term_glyph-1.2.2/

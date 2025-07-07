@@ -183,9 +183,9 @@
     },
     {
       "name": "intl",
-      "rootUri": "file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.20.2",
+      "rootUri": "file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.18.1",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "2.12"
     },
     {
       "name": "json_annotation",
@@ -513,9 +513,9 @@
     },
     {
       "name": "table_calendar",
-      "rootUri": "file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/table_calendar-3.2.0",
+      "rootUri": "file:///C:/Users/yolox/AppData/Local/Pub/Cache/hosted/pub.dev/table_calendar-3.0.9",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "2.12"
     },
     {
       "name": "term_glyph",
@@ -650,7 +650,7 @@
       "languageVersion": "3.7"
     }
   ],
-  "generated": "2025-07-02T23:11:17.030445Z",
+  "generated": "2025-07-07T20:51:53.217938Z",
   "generator": "pub",
   "generatorVersion": "3.7.2",
   "flutterRoot": "file:///C:/dev/flutter",
