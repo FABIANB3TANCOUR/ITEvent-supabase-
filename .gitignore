@@ -1,0 +1,69 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+build/
+windows/flutter/ephemeral/
+!pubspec.yaml
+!pubspec.lock
+
+# Android
+android/.gradle/
+android/app/build/
+android/local.properties
+
+# iOS (si usas mac)
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/build/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.podspec
+
+# Web
+web/.dart_tool/
+web/build/
+
+# VS Code
+.vscode/
+
+# IntelliJ
+.idea/
+
+# MacOS (si llegas a compilar para mac)
+macos/Flutter/ephemeral/
+macos/build/
+
+# Archivos de sistema
+*.iml
+*.ipr
+*.iws
+.DS_Store
+
+# Archivos temporales
+*.log
+*.tmp
+
+# Archivos generados por emuladores
+.emulator_console_auth_token
+
+# Archivos generados por tests
+coverage/
+
+# Archivos de sistema Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Archivos de swap
+*.swp
+
+# Archivos de lock
+pubspec.lock
+
+# Archivos generados por herramientas de CI/CD
+.melos_tool/
