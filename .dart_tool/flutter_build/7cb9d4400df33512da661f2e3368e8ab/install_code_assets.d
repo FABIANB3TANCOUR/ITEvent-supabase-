@@ -1,1 +1,0 @@
- C:\\github\\ITEvent-supabase-\\.dart_tool\\flutter_build\\7cb9d4400df33512da661f2e3368e8ab\\native_assets.json: 

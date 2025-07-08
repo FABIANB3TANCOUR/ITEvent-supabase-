@@ -1,1 +1,0 @@
- C:\\Users\\yolox\\OneDrive\\Documentos\\ITEvent-supabase\\.dart_tool\\flutter_build\\97abe9fa2333d14b2f44ce1f36e06df1\\native_assets.json: 
