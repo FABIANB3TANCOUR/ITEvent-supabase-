@@ -142,7 +142,7 @@ class _EventDetailUserState extends State<EventDetailUser> {
 
       if (!enviado && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registro exitoso, pero error al enviar correo.')),
+          const SnackBar(content: Text('No te llegara cooreo =(')),
         );
       }
     }

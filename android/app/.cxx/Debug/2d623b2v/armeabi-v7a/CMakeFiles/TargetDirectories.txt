@@ -1,0 +1,2 @@
+C:/github/ITEvent-supabase-/android/app/.cxx/Debug/2d623b2v/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/github/ITEvent-supabase-/android/app/.cxx/Debug/2d623b2v/armeabi-v7a/CMakeFiles/rebuild_cache.dir

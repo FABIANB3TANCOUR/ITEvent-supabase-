@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:itevent/services/email_services.dart';
 
 class NuevoUsuarioScreen extends StatefulWidget {
   const NuevoUsuarioScreen({super.key});
@@ -26,54 +27,61 @@ class _NuevoUsuarioScreenState extends State<NuevoUsuarioScreen> {
 
   Future<void> _registrarUsuario() async {
     final nombre = _nombreController.text.trim();
-    final apellido = _apellidoController.text.trim();
-    final correo = _correoController.text.trim();
-    final telefono = _telefonoController.text.trim();
-    final password = _passwordController.text.trim();
-    final fotoUrl = _fotoUrlController.text.trim();
-    final matricula = int.tryParse(_matriculaController.text.trim());
-    final nota = _notaController.text.trim();
-    final presentate = _presentateController.text.trim();
-    final redesSociales = _redesController.text.trim();
+  final apellido = _apellidoController.text.trim();
+  final correo = _correoController.text.trim();
+  final telefono = _telefonoController.text.trim();
+  final password = _passwordController.text.trim();
+  final fotoUrl = _fotoUrlController.text.trim();
+  final matricula = int.tryParse(_matriculaController.text.trim());
+  final nota = _notaController.text.trim();
+  final presentate = _presentateController.text.trim();
+  final redesSociales = _redesController.text.trim();
 
-    if (nombre.isEmpty ||
-        apellido.isEmpty ||
-        correo.isEmpty ||
-        password.isEmpty ||
-        matricula == null) {
+  if (nombre.isEmpty || apellido.isEmpty || correo.isEmpty || password.isEmpty || matricula == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Faltan campos obligatorios')),
+    );
+    return;
+  }
+
+  try {
+    await supabase.from('usuarios').insert({
+      'nombre': nombre,
+      'apellido': apellido,
+      'correo': correo,
+      'telefono': telefono.isNotEmpty ? telefono : null,
+      'password': password,
+      'foto_url': fotoUrl.isNotEmpty ? fotoUrl : null,
+      'matricula': matricula,
+      'nota': nota.isNotEmpty ? nota : null,
+      'presentate': presentate.isNotEmpty ? presentate : null,
+      'autoriza_datos': _autorizacionDatos,
+      'redes_sociales': redesSociales.isNotEmpty ? redesSociales : null,
+    });
+
+    // 👉 Aquí se envía el correo
+    final emailService = EmailService('https://<TU-URL-DE-LA-FUNCIÓN>.vercel.app');
+    await emailService.sendEmail(
+      to: correo,
+      subject: '¡Bienvenido/a a ITEvent!',
+      htmlContent: '''
+        <h1>Hola, $nombre 👋</h1>
+        <p>Gracias por registrarte en nuestra plataforma.</p>
+        <p>Nos alegra que formes parte del evento 🥳</p>
+      ''',
+    );
+
+    if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Faltan campos obligatorios')),
+        const SnackBar(content: Text('Usuario registrado correctamente')),
       );
-      return;
+      Navigator.pop(context);
     }
-
-    try {
-      await supabase.from('usuarios').insert({
-        'nombre': nombre,
-        'apellido': apellido,
-        'correo': correo,
-        'telefono': telefono.isNotEmpty ? telefono : null,
-        'password': password,
-        'foto_url': fotoUrl.isNotEmpty ? fotoUrl : null,
-        'matricula': matricula,
-        'nota': nota.isNotEmpty ? nota : null,
-        'presentate': presentate.isNotEmpty ? presentate : null,
-        'autoriza_datos': _autorizacionDatos,
-        'redes_sociales': redesSociales.isNotEmpty ? redesSociales : null,
-        // 'rol_id': se deja con valor por defecto
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario registrado correctamente')),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al registrar: $e')),
-      );
-    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al registrar: $e')),
+    );
+  }
   }
 
   Widget _buildTextField(
