@@ -83,8 +83,9 @@ class _AddActividadScreenState extends State<AddActividadScreen> {
               ? (_horaInicio ?? TimeOfDay.now())
               : (_horaFin ?? TimeOfDay.now()),
     );
-    if (picked != null)
+    if (picked != null) {
       setState(() => esInicio ? _horaInicio = picked : _horaFin = picked);
+    }
   }
 
   Widget _buildTextField(
