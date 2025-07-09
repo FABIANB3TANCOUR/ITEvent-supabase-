@@ -32,7 +32,10 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
     matricula = prefs.getInt('matricula');
     if (matricula == null) return;
     try {
-      final data = await supabase.from('usuarios').select('''
+      final data =
+          await supabase
+              .from('usuarios')
+              .select('''
         matricula,
         nombre,
         apellido,
@@ -43,7 +46,9 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
         nota,
         presentate,
         autoriza_datos
-      ''').eq('matricula', widget.matricula).maybeSingle();
+      ''')
+              .eq('matricula', widget.matricula)
+              .maybeSingle();
 
       setState(() {
         user = data;
@@ -59,7 +64,8 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
 
   @override
   Widget build(BuildContext context) {
-    final fullName = '${user?['nombre'] ?? ''} ${user?['apellido'] ?? ''}'.trim();
+    final fullName =
+        '${user?['nombre'] ?? ''} ${user?['apellido'] ?? ''}'.trim();
     final bool autorizacion = user?['autoriza_datos'] == true;
 
     return Scaffold(
@@ -72,9 +78,10 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
         ),
         centerTitle: true,
       ),
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : user == null
+      body:
+          loading
+              ? const Center(child: CircularProgressIndicator())
+              : user == null
               ? const Center(child: Text('Usuario no encontrado'))
               : Column(
                 children: [
@@ -167,7 +174,7 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                     ),
                   ),
 
-                    const Divider(height: 1),
+                  const Divider(height: 1),
 
                   // Notas personales (placeholder)
                   Padding(
@@ -188,75 +195,9 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                     ),
                   ),
 
-                    const Divider(height: 1),
+                  const Divider(height: 1),
 
                   // Sección de contacto
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8,
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder:
-                              (_) => AlertDialog(
-                                title: const Text('¿Eliminar perfil?'),
-                                content: const Text(
-                                  'Esta acción no se puede deshacer.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, false),
-                                    child: const Text('Cancelar'),
-                                  ),
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, true),
-                                    child: const Text(
-                                      'Eliminar',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                        );
-
-                        if (confirm == true) {
-                          try {
-                            await supabase
-                                .from('usuarios')
-                                .delete()
-                                .eq('matricula', widget.matricula);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Perfil eliminado exitosamente',
-                                  ),
-                                ),
-                              );
-                              Navigator.pop(
-                                context,
-                              ); // Regresa a la pantalla anterior
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error al eliminar: $e')),
-                            );
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.delete),
-                      label: const Text('Eliminar perfil'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
                 ],
               ),
       bottomNavigationBar: BottomNavigationBar(
