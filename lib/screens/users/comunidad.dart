@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:itevent/screens/users/admin_profile.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'main_navigator.dart';
@@ -18,21 +20,53 @@ class _ComunidadScreenState extends State<ComunidadScreen> {
   List<Map<String, dynamic>> _usuarios = [];
   String _filtroRol = '';
   bool loading = true;
+  int? matricula;
 
   @override
   void initState() {
     super.initState();
-    _fetchUsuarios();
+    _loadAdminIdYUsuarios();
   }
 
-  Future<void> _fetchUsuarios() async {
-    final data = await supabase
+  Future<void> _loadAdminIdYUsuarios() async {
+    final prefs = await SharedPreferences.getInstance();
+    matricula = prefs.getInt('matricula');
+
+    if (matricula == null) {
+      setState(() => loading = false);
+      return;
+    }
+
+    // Cargar usuarios normales
+    final dataUsuarios = await supabase
         .from('usuarios')
         .select('matricula, nombre, apellido, roles(nombre), foto_url')
+        .neq('matricula', matricula!) // Excluir al usuario actual
         .order('nombre');
 
+    // Cargar administradores
+    final dataAdmins = await supabase
+        .from('administradores')
+        .select('id, nombre, correo, foto_url');
+
+    // Convertir y unificar
+    final List<Map<String, dynamic>> listaUsuarios =
+        List<Map<String, dynamic>>.from(dataUsuarios);
+
+    final List<Map<String, dynamic>> listaAdmins =
+        List<Map<String, dynamic>>.from(dataAdmins).map((admin) {
+          return {
+            'matricula': admin['id'], // estandarizamos como matricula
+            'nombre': admin['nombre'],
+            'apellido': '', // vacío si no hay campo apellido
+            'roles': {'nombre': 'Administrador'},
+            'foot_url': admin['foot_url'],
+          };
+        }).toList();
+
+    // Combinar usuarios y administradores
     setState(() {
-      _usuarios = List<Map<String, dynamic>>.from(data);
+      _usuarios = [...listaUsuarios, ...listaAdmins];
       loading = false;
     });
   }
@@ -193,12 +227,21 @@ class _PersonaCard extends StatelessWidget {
         subtitle: Text(role),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => PerfilUsuarioPage(matricula: matricula),
-            ),
-          );
+          if (role == 'Administrador') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AdminProfilePage(adminId: matricula),
+              ),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PerfilUsuarioPage(matricula: matricula),
+              ),
+            );
+          }
         },
       ),
     );
