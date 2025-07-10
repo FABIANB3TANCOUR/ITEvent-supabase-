@@ -1,69 +1,101 @@
-# Flutter
+# ===============================
+# FLUTTER & DART
+# ===============================
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub-cache/
 build/
-windows/flutter/ephemeral/
 !pubspec.yaml
-!pubspec.lock
 
-# Android
+# ===============================
+# COMMON EPHEMERAL SYMLINKS
+# Evita conflictos de .plugin_symlinks en cualquier plataforma
+# ===============================
+**/flutter/ephemeral/
+**/ephemeral/
+**/.plugin_symlinks/
+
+# ===============================
+# ANDROID
+# ===============================
 android/.gradle/
 android/app/build/
 android/local.properties
 
-# iOS (si usas mac)
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
-ios/Flutter/Generated.xcconfig
+# ===============================
+# iOS (si usas Mac)
+# ===============================
 ios/Pods/
 ios/Runner.xcworkspace/
 ios/build/
-ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.framework
 
-# Web
-web/.dart_tool/
-web/build/
-
-# VS Code
-.vscode/
-
-# IntelliJ
-.idea/
-
-# MacOS (si llegas a compilar para mac)
+# ===============================
+# macOS
+# ===============================
 macos/Flutter/ephemeral/
 macos/build/
 
-# Archivos de sistema
+# ===============================
+# LINUX
+# ===============================
+linux/Flutter/ephemeral/
+linux/build/
+
+# ===============================
+# WEB
+# ===============================
+web/.dart_tool/
+web/build/
+
+# ===============================
+# WINDOWS
+# ===============================
+windows/Flutter/ephemeral/
+windows/build/
+
+# ===============================
+# IDEs & CONFIG LOCALES
+# ===============================
+.vscode/
+.idea/
+
+# ===============================
+# SISTEMA OPERATIVO & TEMPORALES
+# ===============================
 *.iml
 *.ipr
 *.iws
-.DS_Store
-
-# Archivos temporales
 *.log
 *.tmp
-
-# Archivos generados por emuladores
-.emulator_console_auth_token
-
-# Archivos generados por tests
-coverage/
-
-# Archivos de sistema Windows
+*.swp
+.DS_Store
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Archivos de swap
-*.swp
+# ===============================
+# TOKENS & ARCHIVOS SENSIBLES
+# ===============================
+.emulator_console_auth_token
 
-# Archivos de lock
-pubspec.lock
+# ===============================
+# ARCHIVOS DE TESTS
+# ===============================
+coverage/
 
-# Archivos generados por herramientas de CI/CD
+# ===============================
+# CI/CD
+# ===============================
 .melos_tool/
+
+# ===============================
+# PUBSPEC LOCK: Versionar si es app, ignorar si es paquete
+# ⚠️ Recomendado NO ignorar en Flutter APP para que todos tengan las mismas versiones
+# ===============================
+# pubspec.lock
