@@ -61,8 +61,17 @@ class _ChatPageState extends State<ChatPage> {
     'joto',
   ];
 
-  int get idYo => widget.remitenteId!;
-  int get idOtro => widget.destinatarioId!;
+  bool get soyAdmin => widget.adminId != null && widget.remitenteId == null;
+
+  int get idYo {
+    if (soyAdmin) return widget.adminId!;
+    return widget.remitenteId!;
+  }
+
+  int get idOtro {
+    if (soyAdmin) return widget.destinatarioId!;
+    return widget.adminId ?? widget.destinatarioId!;
+  }
 
   @override
   void initState() {
@@ -212,78 +221,6 @@ class _ChatPageState extends State<ChatPage> {
         context,
       ).showSnackBar(SnackBar(content: Text('Error al enviar mensaje: $e')));
     }
-  }
-
-  Future<void> _seleccionarImagen() async {
-    try {
-      Uint8List? bytes;
-      String? filename;
-
-      if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
-        final result = await FilePicker.platform.pickFiles(
-          type: FileType.image,
-          withData: true,
-        );
-        if (result == null ||
-            result.files.isEmpty ||
-            result.files.first.bytes == null) {
-          debugPrint('No se seleccionó imagen o está vacía.');
-          return;
-        }
-
-        bytes = result.files.first.bytes!;
-        filename =
-            'chat_${DateTime.now().millisecondsSinceEpoch}_${result.files.first.name}';
-      } else {
-        final picker = ImagePicker();
-        final picked = await picker.pickImage(source: ImageSource.gallery);
-        if (picked == null) {
-          debugPrint('No se seleccionó imagen de la galería.');
-          return;
-        }
-
-        bytes = await picked.readAsBytes();
-        filename =
-            'chat_${DateTime.now().millisecondsSinceEpoch}_${picked.name}';
-      }
-
-      if (bytes.isEmpty) {
-        debugPrint('Los bytes de la imagen están vacíos.');
-        return;
-      }
-
-      debugPrint('Subiendo imagen como: $filename');
-
-      await supabase.storage
-          .from('imagenes')
-          .uploadBinary(
-            filename,
-            bytes,
-            fileOptions: const FileOptions(upsert: true),
-          );
-
-      final publicUrl = supabase.storage
-          .from('imagenes')
-          .getPublicUrl(filename);
-      debugPrint('Imagen subida correctamente: $publicUrl');
-
-      await _enviarImagen(publicUrl);
-    } catch (e) {
-      debugPrint('Error al subir imagen: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
-    }
-  }
-
-  Future<void> _enviarImagen(String url) async {
-    final nuevoMensaje = {
-      'remitente_id': idYo,
-      'destinatario_id': idOtro,
-      'imagen_url': url,
-      'contenido': '[imagen]', // evitar null para cumplir NOT NULL
-    };
-    await supabase.from('mensajes').insert(nuevoMensaje);
   }
 
   Future<void> _seleccionarImagen() async {
