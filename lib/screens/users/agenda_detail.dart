@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:itevent/screens/users/actividad.dart';
 import 'package:itevent/screens/users/main_navigator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AgendaEventoScreen extends StatefulWidget {
@@ -20,6 +21,8 @@ class _AgendaEventoScreenState extends State<AgendaEventoScreen> {
   String? diaSeleccionado;
   bool isLoading = true;
 
+  String modoSeleccionado = 'General';
+
   @override
   void initState() {
     super.initState();
@@ -28,11 +31,29 @@ class _AgendaEventoScreenState extends State<AgendaEventoScreen> {
 
   Future<void> _cargarActividades() async {
     setState(() => isLoading = true);
-    final response = await supabase
+    final prefs = await SharedPreferences.getInstance();
+    final matricula = prefs.getInt('matricula');
+    if (matricula == null) {
+      throw Exception('No se encontró matrícula en SharedPreferences');
+    }
+
+    final registros = await supabase
+        .from('registro_actividades')
+        .select('id_actividad')
+        .eq('matricula', matricula);
+
+    final ids = registros.map((r) => r['id_actividad']).toList();
+
+    var query = supabase
         .from('actividad')
         .select()
-        .eq('id_evento', widget.idEvento)
-        .order('hora_inicio');
+        .eq('id_evento', widget.idEvento);
+
+    if (modoSeleccionado == 'Propia') {
+      query = query.inFilter('id', ids);
+    }
+
+    final response = await query.order('hora_inicio');
 
     actividades = List<Map<String, dynamic>>.from(response);
 
@@ -100,6 +121,39 @@ class _AgendaEventoScreenState extends State<AgendaEventoScreen> {
               : Column(
                 children: [
                   // Barra de días
+                  Container(
+                    color: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children:
+                          ['General', 'Propia'].map((modo) {
+                            final seleccionado = modo == modoSeleccionado;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: ChoiceChip(
+                                label: Text(modo),
+                                selected: seleccionado,
+                                selectedColor: const Color(0xFF3966CC),
+                                labelStyle: TextStyle(
+                                  color:
+                                      seleccionado
+                                          ? Colors.white
+                                          : Colors.black,
+                                ),
+                                onSelected: (_) {
+                                  setState(() {
+                                    modoSeleccionado = modo;
+                                    _cargarActividades();
+                                  });
+                                },
+                              ),
+                            );
+                          }).toList(),
+                    ),
+                  ),
                   Container(
                     color: Colors.grey[200],
                     padding: const EdgeInsets.symmetric(
