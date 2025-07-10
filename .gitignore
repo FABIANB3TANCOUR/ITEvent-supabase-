@@ -7,21 +7,23 @@
 .packages
 .pub-cache/
 build/
+**/build/
 !pubspec.yaml
 
 # ===============================
 # COMMON EPHEMERAL SYMLINKS
-# Evita conflictos de .plugin_symlinks en cualquier plataforma
 # ===============================
 **/flutter/ephemeral/
 **/ephemeral/
 **/.plugin_symlinks/
+**/GeneratedPluginRegistrant.*
 
 # ===============================
 # ANDROID
 # ===============================
 android/.gradle/
 android/app/build/
+android/build/
 android/local.properties
 
 # ===============================
@@ -93,9 +95,3 @@ coverage/
 # CI/CD
 # ===============================
 .melos_tool/
-
-# ===============================
-# PUBSPEC LOCK: Versionar si es app, ignorar si es paquete
-# ⚠️ Recomendado NO ignorar en Flutter APP para que todos tengan las mismas versiones
-# ===============================
-# pubspec.lock
