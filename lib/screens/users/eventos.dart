@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'event_detail.dart';
 import 'main_navigator.dart';
-import 'perfil.dart';
 
 class EventosScreen extends StatefulWidget {
   const EventosScreen({super.key});
@@ -17,7 +16,8 @@ class EventosScreen extends StatefulWidget {
 
 class _EventosScreenState extends State<EventosScreen> {
   final supabase = Supabase.instance.client;
-  static const String _mapboxApiKey = 'TU_API_KEY_MAPBOX'; // Reemplaza con tu API key
+  static const String _mapboxApiKey =
+      'TU_API_KEY_MAPBOX'; // Reemplaza con tu API key
 
   List<dynamic> eventos = [];
   bool isLoading = true;
@@ -79,17 +79,19 @@ class _EventosScreenState extends State<EventosScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar eventos: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cargar eventos: $e')));
         setState(() => isLoading = false);
       }
     }
   }
 
   Widget _buildMapView() {
-    final eventosConUbicacion = eventos.where(
-      (e) => e['latitud'] != null && e['longitud'] != null
-    ).toList();
+    final eventosConUbicacion =
+        eventos
+            .where((e) => e['latitud'] != null && e['longitud'] != null)
+            .toList();
 
     if (eventosConUbicacion.isEmpty) {
       return Center(
@@ -119,67 +121,75 @@ class _EventosScreenState extends State<EventosScreen> {
       ),
       children: [
         TileLayer(
-          urlTemplate: 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token=$_mapboxApiKey',
+          urlTemplate:
+              'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token=$_mapboxApiKey',
           userAgentPackageName: 'com.example.app',
         ),
         MarkerLayer(
-          markers: eventosConUbicacion.map((evento) {
-            return Marker(
-              point: LatLng(
-                (evento['latitud'] as num).toDouble(),
-                (evento['longitud'] as num).toDouble(),
-              ),
-              width: 80,
-              height: 80,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EventDetailUser(eventId: evento['id']),
-                    ),
-                  );
-                },
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.location_pin, color: Colors.red, size: 40),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        evento['nombre_evento'] ?? 'Evento',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+          markers:
+              eventosConUbicacion.map((evento) {
+                return Marker(
+                  point: LatLng(
+                    (evento['latitud'] as num).toDouble(),
+                    (evento['longitud'] as num).toDouble(),
+                  ),
+                  width: 80,
+                  height: 80,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (_) => EventDetailUser(eventId: evento['id']),
                         ),
-                      ),
+                      );
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.location_pin,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            evento['nombre_evento'] ?? 'Evento',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
+                  ),
+                );
+              }).toList(),
         ),
       ],
     );
   }
 
   LatLng _calculateCenter(List<dynamic> eventos) {
-    if (eventos.isEmpty) return const LatLng(19.4326, -99.1332); // CDMX por defecto
+    if (eventos.isEmpty)
+      return const LatLng(19.4326, -99.1332); // CDMX por defecto
 
     double latSum = 0;
     double lngSum = 0;
@@ -189,10 +199,7 @@ class _EventosScreenState extends State<EventosScreen> {
       lngSum += (evento['longitud'] as num).toDouble();
     }
 
-    return LatLng(
-      latSum / eventos.length,
-      lngSum / eventos.length,
-    );
+    return LatLng(latSum / eventos.length, lngSum / eventos.length);
   }
 
   Widget _buildListView() {
@@ -204,25 +211,23 @@ class _EventosScreenState extends State<EventosScreen> {
         itemBuilder: (context, index) {
           final evento = eventos[index];
           return Card(
-            margin: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 12,
               ),
-              leading: evento['logo_url'] != null &&
-                      evento['logo_url'].toString().isNotEmpty
-                  ? Image.network(
-                      evento['logo_url'],
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.event),
-                    )
-                  : const Icon(Icons.event, size: 40),
+              leading:
+                  evento['logo_url'] != null &&
+                          evento['logo_url'].toString().isNotEmpty
+                      ? Image.network(
+                        evento['logo_url'],
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.event),
+                      )
+                      : const Icon(Icons.event, size: 40),
               title: Text(
                 evento['nombre_evento'] ?? 'Sin nombre',
                 style: const TextStyle(fontWeight: FontWeight.w600),
@@ -273,16 +278,14 @@ class _EventosScreenState extends State<EventosScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        leading: GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const PerfilScreen()),
-          ),
-          child: const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.black12,
-              child: Icon(Icons.person, color: Colors.white),
+        leading: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => Navigator.pop(context),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(Icons.arrow_back, color: Colors.white),
             ),
           ),
         ),
@@ -303,27 +306,30 @@ class _EventosScreenState extends State<EventosScreen> {
           ),
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : eventos.isEmpty
+      body:
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : eventos.isEmpty
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Por el momento no cuentas con\nningun evento.\nEspera a que existan mas eventos',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _cargarEventos,
-                        child: const Text('Reintentar'),
-                      ),
-                    ],
-                  ),
-                )
-              : _showMap ? _buildMapView() : _buildListView(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Por el momento no cuentas con\nningun evento.\nEspera a que existan mas eventos',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _cargarEventos,
+                      child: const Text('Reintentar'),
+                    ),
+                  ],
+                ),
+              )
+              : _showMap
+              ? _buildMapView()
+              : _buildListView(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 0,
         selectedItemColor: Colors.blue,
