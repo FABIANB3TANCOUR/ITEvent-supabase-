@@ -8,11 +8,17 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
+     <!-- 🔽 Permisos para acceder a la galería de imágenes -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+
     <application
         android:label="itevent"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true"> <!-- Necesario para Android 9+ -->
+        android:usesCleartextTraffic="true"
+        android:requestLegacyExternalStorage="true"> <!-- Necesario para Android 9+ -->
 
         <meta-data
             android:name="com.mapbox.token"

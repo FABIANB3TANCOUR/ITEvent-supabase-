@@ -37,6 +37,18 @@ dependencies:
   # 🧠 Agrega esta línea justo aquí:
   shared_preferences: ^2.2.2  # (o la última versión estable)
 
+   # 📷 Para subir imágenes desde galería
+  image_picker: ^1.0.4
+  path: ^1.8.3
+
+  # 📂 Para manejar archivos (selección de imágenes)
+  file_picker: ^5.2.1            # Agregado aquí 
+  
+  # 🧠 Agrega esta línea justo aquí:
+  shared_preferences: ^2.2.2  # (o la última versión estable)
+
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

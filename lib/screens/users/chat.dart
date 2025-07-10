@@ -31,7 +31,6 @@ class _ChatPageState extends State<ChatPage> {
   Map<int, String> _nombresUsuarios = {};
   RealtimeChannel? _canalMensajes;
 
-  // Diccionario local de malas palabras
   final List<String> _palabrasProhibidas = [
     'tonto',
     'menso',
@@ -62,17 +61,8 @@ class _ChatPageState extends State<ChatPage> {
     'joto',
   ];
 
-  bool get soyAdmin => widget.adminId != null && widget.remitenteId == null;
-
-  int get idYo {
-    if (soyAdmin) return widget.adminId!;
-    return widget.remitenteId!;
-  }
-
-  int get idOtro {
-    if (soyAdmin) return widget.destinatarioId!;
-    return widget.adminId ?? widget.destinatarioId!;
-  }
+  int get idYo => widget.remitenteId!;
+  int get idOtro => widget.destinatarioId!;
 
   @override
   void initState() {
@@ -90,8 +80,8 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  // Función para censurar malas palabras
-  String _censurarTexto(String texto) {
+  String _censurarTexto(String? texto) {
+    if (texto == null) return '';
     String resultado = texto;
     for (final palabra in _palabrasProhibidas) {
       final regex = RegExp(
@@ -195,41 +185,105 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _enviarMensaje() async {
     final textoOriginal = _mensajeController.text.trim();
+
     if (textoOriginal.isEmpty) return;
 
     final textoCensurado = _censurarTexto(textoOriginal);
 
-    Map<String, dynamic> nuevoMensaje;
+    final nuevoMensaje = {
+      'remitente_id': idYo,
+      'destinatario_id': idOtro,
+      'contenido': textoCensurado,
+    };
 
-    if (soyAdmin) {
-      nuevoMensaje = {
-        'admin_id': idYo,
-        'destinatario_id': idOtro,
-        'contenido': textoCensurado,
-      };
-    } else if (widget.adminId != null) {
-      nuevoMensaje = {
-        'remitente_id': idYo,
-        'admin_id': idOtro,
-        'contenido': textoCensurado,
-      };
-    } else {
-      nuevoMensaje = {
-        'remitente_id': idYo,
-        'destinatario_id': idOtro,
-        'contenido': textoCensurado,
-      };
+    try {
+      await supabase.from('mensajes').insert(nuevoMensaje);
+      _mensajeController.clear();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
+    } catch (e) {
+      debugPrint('Error al enviar mensaje: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al enviar mensaje: $e')));
     }
+  }
 
+  Future<void> _seleccionarImagen() async {
+    try {
+      Uint8List? bytes;
+      String? filename;
+
+      if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          withData: true,
+        );
+        if (result == null ||
+            result.files.isEmpty ||
+            result.files.first.bytes == null) {
+          debugPrint('No se seleccionó imagen o está vacía.');
+          return;
+        }
+
+        bytes = result.files.first.bytes!;
+        filename =
+            'chat_${DateTime.now().millisecondsSinceEpoch}_${result.files.first.name}';
+      } else {
+        final picker = ImagePicker();
+        final picked = await picker.pickImage(source: ImageSource.gallery);
+        if (picked == null) {
+          debugPrint('No se seleccionó imagen de la galería.');
+          return;
+        }
+
+        bytes = await picked.readAsBytes();
+        filename =
+            'chat_${DateTime.now().millisecondsSinceEpoch}_${picked.name}';
+      }
+
+      if (bytes.isEmpty) {
+        debugPrint('Los bytes de la imagen están vacíos.');
+        return;
+      }
+
+      debugPrint('Subiendo imagen como: $filename');
+
+      await supabase.storage
+          .from('imagenes')
+          .uploadBinary(
+            filename,
+            bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      final publicUrl = supabase.storage
+          .from('imagenes')
+          .getPublicUrl(filename);
+      debugPrint('Imagen subida correctamente: $publicUrl');
+
+      await _enviarImagen(publicUrl);
+    } catch (e) {
+      debugPrint('Error al subir imagen: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+    }
+  }
+
+  Future<void> _enviarImagen(String url) async {
+    final nuevoMensaje = {
+      'remitente_id': idYo,
+      'destinatario_id': idOtro,
+      'imagen_url': url,
+      'contenido': '[imagen]', // evitar null para cumplir NOT NULL
+    };
     await supabase.from('mensajes').insert(nuevoMensaje);
-    _mensajeController.clear();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
   }
 
   Future<void> _seleccionarImagen() async {
