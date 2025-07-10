@@ -290,7 +290,7 @@ class _ChatPageState extends State<ChatPage> {
       'remitente_id': idYo,
       'destinatario_id': idOtro,
       'imagen_url': url,
-      'contenido': '[imagen]', // evitar null para cumplir NOT NULL
+      'contenido': null, // evitar null para cumplir NOT NULL
     };
     await supabase.from('mensajes').insert(nuevoMensaje);
   }
