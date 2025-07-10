@@ -1,0 +1,38 @@
+name: itevent
+description: "Aplicación de gestión de eventos con Mapbox y Supabase"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.7.2 <4.0.0"
+
+dependencies:
+
+  flutter:
+    sdk: flutter
+
+  # Dependencias principales
+  supabase_flutter: ^2.0.0       # Para Supabase
+  flutter_map: ^8.1.1            # Mapa interactivo
+  latlong2: ^0.9.0               # Manejo de coordenadas
+  http: ^1.4.0                   # Para API de Mapbox
+  
+  # Dependencias UI/UX
+  cupertino_icons: ^1.0.8        # Íconos iOS
+  table_calendar: ^3.0.9         # Calendario (si lo usas)
+
+  # Opcionales (recomendadas)
+  permission_handler: ^12.0.0+1  # Para permisos de ubicación
+  mapbox_search: ^4.3.1          # Autocompletado de direcciones
+  flutter_dotenv: ^5.1.0         # Para manejar API Keys (opcional)
+
+  # 📌 Lo que hacía falta:
+  intl: ^0.18.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0          # Análisis de código
+
+flutter:
+  uses-material-design: true

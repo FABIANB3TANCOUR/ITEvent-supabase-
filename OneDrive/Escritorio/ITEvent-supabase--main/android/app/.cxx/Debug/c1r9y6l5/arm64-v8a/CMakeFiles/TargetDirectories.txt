@@ -1,0 +1,2 @@
+C:/Users/rdfh1/Documents/ITEvent-supabase-/android/app/.cxx/Debug/c1r9y6l5/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/rdfh1/Documents/ITEvent-supabase-/android/app/.cxx/Debug/c1r9y6l5/arm64-v8a/CMakeFiles/rebuild_cache.dir

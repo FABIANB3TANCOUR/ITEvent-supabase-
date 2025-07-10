@@ -1,0 +1,2 @@
+C:/Users/yolox/OneDrive/Documentos/ITEvent-supabase/android/app/.cxx/RelWithDebInfo/2o3a5f3t/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/yolox/OneDrive/Documentos/ITEvent-supabase/android/app/.cxx/RelWithDebInfo/2o3a5f3t/arm64-v8a/CMakeFiles/rebuild_cache.dir
