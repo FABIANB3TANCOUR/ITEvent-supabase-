@@ -1,4 +1,9 @@
+import 'dart:io' show Platform;
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatPage extends StatefulWidget {
@@ -28,10 +33,33 @@ class _ChatPageState extends State<ChatPage> {
 
   // Diccionario local de malas palabras
   final List<String> _palabrasProhibidas = [
-    'tonto', 'menso', 'pendejo', 'idiota', 'estupido', 'mierda', 'verga',
-    'estupida', 'imbecil', 'tarado', 'puto', 'puta', 'pito', 'chinga',
-    'chingada', 'vrg', 'maldita', 'perra', 'maldito', 'culero', 'culera',
-    'culo', 'zorra', 'pinche', 'puñetas', 'maricon', 'joto'
+    'tonto',
+    'menso',
+    'pendejo',
+    'idiota',
+    'estupido',
+    'mierda',
+    'verga',
+    'estupida',
+    'imbecil',
+    'tarado',
+    'puto',
+    'puta',
+    'pito',
+    'chinga',
+    'chingada',
+    'vrg',
+    'maldita',
+    'perra',
+    'maldito',
+    'culero',
+    'culera',
+    'culo',
+    'zorra',
+    'pinche',
+    'puñetas',
+    'maricon',
+    'joto',
   ];
 
   bool get soyAdmin => widget.adminId != null && widget.remitenteId == null;
@@ -103,18 +131,21 @@ class _ChatPageState extends State<ChatPage> {
         .order('fecha_envio', ascending: true);
 
     setState(() {
-      _mensajes = data.where((m) {
-        if (soyAdmin) {
-          return (m['admin_id'] == idYo && m['destinatario_id'] == idOtro) ||
-              (m['remitente_id'] == idOtro && m['admin_id'] == idYo);
-        } else if (widget.adminId != null) {
-          return (m['remitente_id'] == idYo && m['admin_id'] == idOtro) ||
-              (m['admin_id'] == idOtro && m['destinatario_id'] == idYo);
-        } else {
-          return (m['remitente_id'] == idYo && m['destinatario_id'] == idOtro) ||
-              (m['remitente_id'] == idOtro && m['destinatario_id'] == idYo);
-        }
-      }).toList();
+      _mensajes =
+          data.where((m) {
+            if (soyAdmin) {
+              return (m['admin_id'] == idYo &&
+                      m['destinatario_id'] == idOtro) ||
+                  (m['remitente_id'] == idOtro && m['admin_id'] == idYo);
+            } else if (widget.adminId != null) {
+              return (m['remitente_id'] == idYo && m['admin_id'] == idOtro) ||
+                  (m['admin_id'] == idOtro && m['destinatario_id'] == idYo);
+            } else {
+              return (m['remitente_id'] == idYo &&
+                      m['destinatario_id'] == idOtro) ||
+                  (m['remitente_id'] == idOtro && m['destinatario_id'] == idYo);
+            }
+          }).toList();
     });
   }
 
@@ -129,14 +160,21 @@ class _ChatPageState extends State<ChatPage> {
           callback: (payload) {
             final nuevo = payload.newRecord;
 
-            final valido = soyAdmin
-                ? (nuevo['admin_id'] == idYo && nuevo['destinatario_id'] == idOtro) ||
-                    (nuevo['remitente_id'] == idOtro && nuevo['admin_id'] == idYo)
-                : widget.adminId != null
-                    ? (nuevo['remitente_id'] == idYo && nuevo['admin_id'] == idOtro) ||
-                        (nuevo['admin_id'] == idOtro && nuevo['destinatario_id'] == idYo)
-                    : (nuevo['remitente_id'] == idYo && nuevo['destinatario_id'] == idOtro) ||
-                        (nuevo['remitente_id'] == idOtro && nuevo['destinatario_id'] == idYo);
+            final valido =
+                soyAdmin
+                    ? (nuevo['admin_id'] == idYo &&
+                            nuevo['destinatario_id'] == idOtro) ||
+                        (nuevo['remitente_id'] == idOtro &&
+                            nuevo['admin_id'] == idYo)
+                    : widget.adminId != null
+                    ? (nuevo['remitente_id'] == idYo &&
+                            nuevo['admin_id'] == idOtro) ||
+                        (nuevo['admin_id'] == idOtro &&
+                            nuevo['destinatario_id'] == idYo)
+                    : (nuevo['remitente_id'] == idYo &&
+                            nuevo['destinatario_id'] == idOtro) ||
+                        (nuevo['remitente_id'] == idOtro &&
+                            nuevo['destinatario_id'] == idYo);
 
             if (!valido || _mensajes.any((m) => m['id'] == nuevo['id'])) return;
 
@@ -194,6 +232,78 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  Future<void> _seleccionarImagen() async {
+    try {
+      Uint8List? bytes;
+      String? filename;
+
+      if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          withData: true,
+        );
+        if (result == null ||
+            result.files.isEmpty ||
+            result.files.first.bytes == null) {
+          debugPrint('No se seleccionó imagen o está vacía.');
+          return;
+        }
+
+        bytes = result.files.first.bytes!;
+        filename =
+            'chat_${DateTime.now().millisecondsSinceEpoch}_${result.files.first.name}';
+      } else {
+        final picker = ImagePicker();
+        final picked = await picker.pickImage(source: ImageSource.gallery);
+        if (picked == null) {
+          debugPrint('No se seleccionó imagen de la galería.');
+          return;
+        }
+
+        bytes = await picked.readAsBytes();
+        filename =
+            'chat_${DateTime.now().millisecondsSinceEpoch}_${picked.name}';
+      }
+
+      if (bytes.isEmpty) {
+        debugPrint('Los bytes de la imagen están vacíos.');
+        return;
+      }
+
+      debugPrint('Subiendo imagen como: $filename');
+
+      await supabase.storage
+          .from('imagenes')
+          .uploadBinary(
+            filename,
+            bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      final publicUrl = supabase.storage
+          .from('imagenes')
+          .getPublicUrl(filename);
+      debugPrint('Imagen subida correctamente: $publicUrl');
+
+      await _enviarImagen(publicUrl);
+    } catch (e) {
+      debugPrint('Error al subir imagen: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+    }
+  }
+
+  Future<void> _enviarImagen(String url) async {
+    final nuevoMensaje = {
+      'remitente_id': idYo,
+      'destinatario_id': idOtro,
+      'imagen_url': url,
+      'contenido': '[imagen]', // evitar null para cumplir NOT NULL
+    };
+    await supabase.from('mensajes').insert(nuevoMensaje);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -210,44 +320,82 @@ class _ChatPageState extends State<ChatPage> {
               itemCount: _mensajes.length,
               itemBuilder: (context, index) {
                 final msg = _mensajes[index];
-                final bool esMio = soyAdmin
-                    ? msg['admin_id'] == idYo
-                    : msg['remitente_id'] == idYo;
+                final bool esMio =
+                    soyAdmin
+                        ? msg['admin_id'] == idYo
+                        : msg['remitente_id'] == idYo;
 
-                final String nombre = esMio
-                    ? 'Yo'
-                    : (_nombresUsuarios[msg['remitente_id']] ?? 'Admin');
+                final String nombre =
+                    esMio
+                        ? 'Yo'
+                        : (_nombresUsuarios[msg['remitente_id']] ?? 'Admin');
 
                 return Align(
-                  alignment: esMio ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment:
+                      esMio ? Alignment.centerRight : Alignment.centerLeft,
                   child: Column(
-                    crossAxisAlignment: esMio
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        esMio
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
                     children: [
                       Text(
                         nombre,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        decoration: BoxDecoration(
-                          color: esMio
-                              ? const Color(0xFF3966CC)
-                              : const Color(0xFFE0E0E0),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          _censurarTexto(msg['contenido']),
-                          style: TextStyle(
-                            color: esMio ? Colors.white : Colors.black,
+                      if (msg['contenido'] != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: BoxDecoration(
+                            color:
+                                esMio
+                                    ? const Color(0xFF3966CC)
+                                    : const Color(0xFFE0E0E0),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _censurarTexto(msg['contenido']),
+                            style: TextStyle(
+                              color: esMio ? Colors.white : Colors.black,
+                            ),
                           ),
                         ),
-                      ),
+                      if (msg['imagen_url'] != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              msg['imagen_url'],
+                              width: 150,
+                              height: 150,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (
+                                context,
+                                child,
+                                loadingProgress,
+                              ) {
+                                if (loadingProgress == null) return child;
+                                return const SizedBox(
+                                  width: 150,
+                                  height: 150,
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              },
+                              errorBuilder:
+                                  (context, error, stackTrace) => const Text(
+                                    'Error al cargar la imagen',
+                                    style: TextStyle(color: Colors.black),
+                                  ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 );
@@ -259,6 +407,10 @@ class _ChatPageState extends State<ChatPage> {
             padding: const EdgeInsets.all(8),
             child: Row(
               children: [
+                IconButton(
+                  icon: const Icon(Icons.image, color: Colors.green),
+                  onPressed: _seleccionarImagen,
+                ),
                 Expanded(
                   child: TextField(
                     controller: _mensajeController,

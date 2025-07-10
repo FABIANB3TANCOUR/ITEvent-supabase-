@@ -19,7 +19,8 @@ dependencies:
   
   # Dependencias UI/UX
   cupertino_icons: ^1.0.8        # Íconos iOS
-  table_calendar: ^3.0.9         # Calendario (si lo usas)
+  intl: ^0.20.2
+  table_calendar: ^3.2.0
 
   # Opcionales (recomendadas)
   permission_handler: ^12.0.0+1  # Para permisos de ubicación
@@ -27,7 +28,14 @@ dependencies:
   flutter_dotenv: ^5.1.0         # Para manejar API Keys (opcional)
 
   # 📌 Lo que hacía falta:
-  intl: ^0.18.1
+  image_picker: ^1.0.4
+  path: ^1.8.3
+
+  # 📂 Para manejar archivos (selección de imágenes)
+  file_picker: ^10.2.0          # Agregado aquí 
+
+  # 🧠 Agrega esta línea justo aquí:
+  shared_preferences: ^2.2.2  # (o la última versión estable)
 
 dev_dependencies:
   flutter_test:
