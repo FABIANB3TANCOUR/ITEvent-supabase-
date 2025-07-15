@@ -16,7 +16,7 @@ class EventDetailAdmin extends StatefulWidget {
 
 class _EventDetailAdminState extends State<EventDetailAdmin> {
   final supabase = Supabase.instance.client;
-  static const String _mapboxApiKey = 'TU_API_KEY_MAPBOX'; // Reemplaza con tu API key
+  static const String _mapboxApiKey = 'TU_API_KEY_MAPBOX';
 
   Map<String, dynamic>? event;
   bool _isLoading = true;
@@ -48,8 +48,10 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
             latitud,
             longitud,
             direccion,
-            organizadores (
-              nombre
+            evento_personal (
+              personal_eventos (
+                nombre
+              )
             )
           ''')
           .eq('id', widget.eventId)
@@ -58,16 +60,14 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
       setState(() {
         event = data;
         _isLoading = false;
-        
-        // Configurar ubicación para el mapa
+
         if (data?['latitud'] != null && data?['longitud'] != null) {
           _ubicacionEvento = LatLng(
-            (data?['latitud'] as num).toDouble(), 
-            (data?['longitud'] as num).toDouble()
+            (data?['latitud'] as num).toDouble(),
+            (data?['longitud'] as num).toDouble(),
           );
         }
-        
-        // Configurar texto de localidad
+
         if (event?['municipio'] != null && event?['estado'] != null) {
           localidad = '${event!['municipio']}, ${event!['estado']}';
         } else {
@@ -105,7 +105,7 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
 
     try {
       await supabase.from('eventos').delete().eq('id', widget.eventId);
-      Navigator.pop(context); // Volver atrás después de eliminar
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Evento eliminado exitosamente')),
       );
@@ -144,7 +144,6 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
           options: MapOptions(
             initialCenter: _ubicacionEvento!,
             initialZoom: 15.0,
-      
           ),
           children: [
             TileLayer(
@@ -165,146 +164,6 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: const Text(
-          'Eventos',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        leading: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: () => Navigator.pop(context),
-            child: const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Icon(Icons.arrow_back, color: Colors.white),
-            ),
-          ),
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : event == null
-              ? const Center(child: Text('Evento no encontrado'))
-              : ListView(
-                  children: [
-                    if (event!['portada_url'] != null)
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(16),
-                        ),
-                        child: Image.network(
-                          event!['portada_url'],
-                          height: 220,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            event!['nombre_evento'] ?? 'Sin nombre',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            localidad,
-                            style: TextStyle(color: Colors.grey[700]),
-                          ),
-                          Text(
-                            _formatearFecha(event!['fecha_fin']),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Divider(),
-                          const SizedBox(height: 10),
-                          _seccionTitulo('Ubicación'),
-                          const SizedBox(height: 12),
-                          _buildMapaUbicacion(),
-                          if (event?['direccion'] != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                event!['direccion'],
-                                style: const TextStyle(color: Colors.black87),
-                              ),
-                            ),
-                          const SizedBox(height: 20),
-                          const Divider(),
-                          const SizedBox(height: 10),
-                          _seccionTitulo('Sobre el evento'),
-                          const SizedBox(height: 12),
-                          _infoCard([
-                            _infoText('Descripción', event!['descripcion']),
-                            _infoText(
-                              'Organizador',
-                              event!['organizadores']?['nombre'],
-                            ),
-                            _infoText(
-                              'Cupo total',
-                              event!['cupo_total'].toString(),
-                            ),
-                            _infoText(
-                              'Fecha de inicio',
-                              _formatearFecha(event!['fecha_inicio']),
-                            ),
-                            _infoText(
-                              'Fecha de fin',
-                              _formatearFecha(event!['fecha_fin']),
-                            ),
-                            _infoText(
-                              'Creado en',
-                              _formatearFecha(event!['created_at']),
-                            ),
-                          ]),
-                          const SizedBox(height: 25),
-                          _actionButton('Modificar datos', Colors.blue, () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => EditEventScreen(eventId: event!['id']),
-                              ),
-                            );
-                          }),
-                          _actionButton('Ver actividades', Colors.blue, () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AgendaEventoScreen(
-                                  idEvento: widget.eventId,
-                                ),
-                              ),
-                            );
-                          }),
-                          _actionButton(
-                            'Eliminar Evento',
-                            Colors.orange,
-                            _eliminarEvento,
-                            colorTexto: Colors.black,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-    );
-  }
-
   String _formatearFecha(String fechaISO) {
     try {
       final fecha = DateTime.parse(fechaISO);
@@ -316,18 +175,8 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
 
   String _mesNombre(int mes) {
     const meses = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre',
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
     return meses[mes - 1];
   }
@@ -401,6 +250,124 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
         onPressed: onPressed,
         child: Text(texto),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        backgroundColor: Colors.blue,
+        title: const Text(
+          'Eventos',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        leading: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () => Navigator.pop(context),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(Icons.arrow_back, color: Colors.white),
+            ),
+          ),
+        ),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : event == null
+              ? const Center(child: Text('Evento no encontrado'))
+              : ListView(
+                  children: [
+                    if (event!['portada_url'] != null)
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(16),
+                        ),
+                        child: Image.network(
+                          event!['portada_url'],
+                          height: 220,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            event!['nombre_evento'] ?? 'Sin nombre',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(localidad, style: TextStyle(color: Colors.grey[700])),
+                          Text(
+                            _formatearFecha(event!['fecha_fin']),
+                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                          ),
+                          const SizedBox(height: 20),
+                          const Divider(),
+                          const SizedBox(height: 10),
+                          _seccionTitulo('Ubicación'),
+                          const SizedBox(height: 12),
+                          _buildMapaUbicacion(),
+                          if (event?['direccion'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                event!['direccion'],
+                                style: const TextStyle(color: Colors.black87),
+                              ),
+                            ),
+                          const SizedBox(height: 20),
+                          const Divider(),
+                          const SizedBox(height: 10),
+                          _seccionTitulo('Sobre el evento'),
+                          const SizedBox(height: 12),
+                          _infoCard([
+                            _infoText('Descripción', event!['descripcion']),
+                            _infoText(
+                              'Organizadores',
+                              (event!['evento_personal'] as List)
+                                  .map((e) => e['personal_eventos']['nombre'])
+                                  .join(', '),
+                            ),
+                            _infoText('Cupo total', event!['cupo_total'].toString()),
+                            _infoText('Fecha de inicio', _formatearFecha(event!['fecha_inicio'])),
+                            _infoText('Fecha de fin', _formatearFecha(event!['fecha_fin'])),
+                            _infoText('Creado en', _formatearFecha(event!['created_at'])),
+                          ]),
+                          const SizedBox(height: 25),
+                          _actionButton('Modificar datos', Colors.blue, () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => EditEventScreen(eventId: event!['id']),
+                              ),
+                            );
+                          }),
+                          _actionButton('Ver actividades', Colors.blue, () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AgendaEventoScreen(idEvento: widget.eventId),
+                              ),
+                            );
+                          }),
+                          _actionButton('Eliminar Evento', Colors.orange, _eliminarEvento,
+                              colorTexto: Colors.black),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
     );
   }
 }

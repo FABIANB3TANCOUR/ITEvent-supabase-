@@ -27,8 +27,9 @@ class _EditEventScreenState extends State<EditEventScreen> {
   final _municipioController = TextEditingController();
   final _direccionController = TextEditingController();
   
-  List<dynamic> _organizadores = [];
-  int? _organizadorSeleccionado;
+  
+  List<dynamic> _organizadoresDisponibles = [];
+  List<int> _organizadoresSeleccionados = [];
   DateTime? _fechaInicio;
   DateTime? _fechaFin;
   LatLng? _ubicacionSeleccionada;
@@ -45,107 +46,114 @@ class _EditEventScreenState extends State<EditEventScreen> {
     return texto.isEmpty ? null : texto;
   }
 
-  Future<void> _loadEventData() async {
-    try {
-      final data = await supabase
-          .from('eventos')
-          .select()
-          .eq('id', widget.eventId)
-          .maybeSingle();
+ Future<void> _loadEventData() async {
+  try {
+    final data = await supabase
+        .from('eventos')
+        .select()
+        .eq('id', widget.eventId)
+        .maybeSingle();
 
-      final organizadoresData = await supabase
-          .from('organizadores')
-          .select('id, nombre');
+    final organizadoresDisponibles = await supabase
+        .from('personal_eventos')
+        .select()
+        .eq('rol_id', 3); // solo organizadores
 
-      if (data != null) {
-        _nombreController.text = data['nombre_evento'] ?? '';
-        _descripcionController.text = data['descripcion'] ?? '';
-        _cupoController.text = (data['cupo_total'] ?? '').toString();
-        _logoUrlController.text = data['logo_url'] ?? '';
-        _portadaUrlController.text = data['portada_url'] ?? '';
-        _estadoController.text = data['estado'] ?? '';
-        _municipioController.text = data['municipio'] ?? '';
-        _direccionController.text = data['direccion'] ?? '';
-        _organizadorSeleccionado = data['organizador_id'];
-        _fechaInicio = DateTime.tryParse(data['fecha_inicio'] ?? '');
-        _fechaFin = DateTime.tryParse(data['fecha_fin'] ?? '');
-        
-        if (data['latitud'] != null && data['longitud'] != null) {
-          _ubicacionSeleccionada = LatLng(
-            (data['latitud'] as num).toDouble(), 
-            (data['longitud'] as num).toDouble()
-          );
-        }
-      }
+    final organizadoresEvento = await supabase
+        .from('evento_personal')
+        .select('id_personal')
+        .eq('id_evento', widget.eventId);
 
-      _organizadores = organizadoresData;
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar el evento: $e')));
-    }
+    if (data != null) {
+      _nombreController.text = data['nombre_evento'] ?? '';
+      _descripcionController.text = data['descripcion'] ?? '';
+      _cupoController.text = (data['cupo_total'] ?? '').toString();
+      _logoUrlController.text = data['logo_url'] ?? '';
+      _portadaUrlController.text = data['portada_url'] ?? '';
+      _estadoController.text = data['estado'] ?? '';
+      _municipioController.text = data['municipio'] ?? '';
+      _direccionController.text = data['direccion'] ?? '';
+      _fechaInicio = DateTime.tryParse(data['fecha_inicio'] ?? '');
+      _fechaFin = DateTime.tryParse(data['fecha_fin'] ?? '');
 
-    setState(() => _isLoading = false);
-  }
-
-  Future<void> _updateEvent() async {
-    if (_fechaInicio == null || _fechaFin == null || _ubicacionSeleccionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa todos los campos obligatorios.')));
-      return;
-    }
-
-    try {
-      await supabase
-          .from('eventos')
-          .update({
-            'nombre_evento': limpiarTexto(_nombreController),
-            'descripcion': limpiarTexto(_descripcionController),
-            'cupo_total': int.tryParse(_cupoController.text) ?? 0,
-            'logo_url': limpiarTexto(_logoUrlController),
-            'portada_url': limpiarTexto(_portadaUrlController),
-            'fecha_inicio': _fechaInicio?.toIso8601String(),
-            'fecha_fin': _fechaFin?.toIso8601String(),
-            'estado': limpiarTexto(_estadoController),
-            'municipio': limpiarTexto(_municipioController),
-            'organizador_id': _organizadorSeleccionado,
-            'latitud': _ubicacionSeleccionada!.latitude,
-            'longitud': _ubicacionSeleccionada!.longitude,
-            'direccion': _direccionController.text.trim(),
-          })
-          .eq('id', widget.eventId);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Evento actualizado correctamente')),
+      if (data['latitud'] != null && data['longitud'] != null) {
+        _ubicacionSeleccionada = LatLng(
+          (data['latitud'] as num).toDouble(),
+          (data['longitud'] as num).toDouble(),
         );
-        Navigator.pop(context, true);
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al actualizar: $e')));
     }
-  }
 
-  Future<void> _pickDate({required bool isInicio}) async {
-    final selected = await showDatePicker(
-      context: context,
-      initialDate: isInicio 
-          ? (_fechaInicio ?? DateTime.now())
-          : (_fechaFin ?? DateTime.now()),
-      firstDate: DateTime(2023),
-      lastDate: DateTime(2100),
+    _organizadoresDisponibles = organizadoresDisponibles;
+    _organizadoresSeleccionados = organizadoresEvento
+        .map<int>((org) => org['id_personal'] as int)
+        .toList();
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al cargar el evento: $e')),
     );
-
-    if (selected != null) {
-      setState(() {
-        if (isInicio) {
-          _fechaInicio = selected;
-        } else {
-          _fechaFin = selected;
-        }
-      });
-    }
   }
+
+  setState(() => _isLoading = false);
+}
+
+Future<void> _updateEvent() async {
+  if (_fechaInicio == null || _fechaFin == null || _ubicacionSeleccionada == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Completa todos los campos obligatorios.')),
+    );
+    return;
+  }
+
+  try {
+    // 1. Actualizar datos del evento principal
+    await supabase
+        .from('eventos')
+        .update({
+          'nombre_evento': limpiarTexto(_nombreController),
+          'descripcion': limpiarTexto(_descripcionController),
+          'cupo_total': int.tryParse(_cupoController.text) ?? 0,
+          'logo_url': limpiarTexto(_logoUrlController),
+          'portada_url': limpiarTexto(_portadaUrlController),
+          'fecha_inicio': _fechaInicio?.toIso8601String(),
+          'fecha_fin': _fechaFin?.toIso8601String(),
+          'estado': limpiarTexto(_estadoController),
+          'municipio': limpiarTexto(_municipioController),
+          'latitud': _ubicacionSeleccionada!.latitude,
+          'longitud': _ubicacionSeleccionada!.longitude,
+          'direccion': _direccionController.text.trim(),
+        })
+        .eq('id', widget.eventId);
+
+    // 2. Eliminar organizadores actuales del evento
+    await supabase
+        .from('evento_personal')
+        .delete()
+        .eq('id_evento', widget.eventId);
+
+    // 3. Insertar nuevos organizadores seleccionados
+    final nuevosOrganizadores = _organizadoresSeleccionados.map((idPersonal) => {
+          'id_evento': widget.eventId,
+          'id_personal': idPersonal,
+        }).toList();
+
+    if (nuevosOrganizadores.isNotEmpty) {
+      await supabase.from('evento_personal').insert(nuevosOrganizadores);
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Evento actualizado correctamente')),
+      );
+      Navigator.pop(context, true);
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al actualizar: $e')),
+    );
+  }
+}
+
 
   Future<void> _buscarDireccion() async {
     if (_direccionController.text.isEmpty) return;
@@ -207,6 +215,28 @@ class _EditEventScreenState extends State<EditEventScreen> {
       _direccionController.text = 'Coordenadas: ${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}';
     }
   }
+
+  Future<void> _pickDate({required bool isInicio}) async {
+  final selected = await showDatePicker(
+    context: context,
+    initialDate: isInicio 
+        ? (_fechaInicio ?? DateTime.now())
+        : (_fechaFin ?? DateTime.now()),
+    firstDate: DateTime(2023),
+    lastDate: DateTime(2100),
+  );
+
+  if (selected != null) {
+    setState(() {
+      if (isInicio) {
+        _fechaInicio = selected;
+      } else {
+        _fechaFin = selected;
+      }
+    });
+  }
+}
+
 
   Widget _buildDatePicker(String label, bool isInicio) {
     final selectedDate = isInicio ? _fechaInicio : _fechaFin;
@@ -396,25 +426,32 @@ class _EditEventScreenState extends State<EditEventScreen> {
                           _buildLocationField(),
                           const SizedBox(height: 10),
                           const Text(
-                            'Organizador:',
+                            'Organizadores:',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          DropdownButton<int>(
-                            isExpanded: true,
-                            value: _organizadorSeleccionado,
-                            hint: const Text('Selecciona un organizador'),
-                            items: _organizadores.map<DropdownMenuItem<int>>(
-                              (org) => DropdownMenuItem(
-                                value: org['id'],
-                                child: Text(org['nombre']),
-                              ),
-                            ).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _organizadorSeleccionado = value;
-                              });
-                            },
-                          ),
+                          Column(
+                              children: _organizadoresDisponibles.map<Widget>((org) {
+                                final id = org['id'] as int;
+                                final nombre = org['nombre'] ?? '';
+                                final seleccionado = _organizadoresSeleccionados.contains(id);
+
+                                return CheckboxListTile(
+                                  title: Text(nombre),
+                                  value: seleccionado,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        _organizadoresSeleccionados.add(id);
+                                      } else {
+                                        _organizadoresSeleccionados.remove(id);
+                                      }
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+
+
                           const SizedBox(height: 20),
                           ElevatedButton(
                             onPressed: _updateEvent,

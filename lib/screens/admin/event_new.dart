@@ -15,7 +15,7 @@ class NuevoEventoScreen extends StatefulWidget {
 class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
   final supabase = Supabase.instance.client;
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controladores
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
@@ -26,15 +26,15 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
   final _municipioController = TextEditingController();
   final _direccionController = TextEditingController();
 
-  // Variables de estado
   DateTime? _fechaInicio;
   DateTime? _fechaFin;
   LatLng? _ubicacionSeleccionada;
+
   List<Map<String, dynamic>> _organizadores = [];
-  int? _organizadorSeleccionado;
+  List<int> _organizadoresSeleccionados = [];
+
   bool _isLoading = true;
 
-  // Mapbox
   static const String _mapboxApiKey = 'TU_API_KEY_MAPBOX';
 
   @override
@@ -45,7 +45,11 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
 
   Future<void> _cargarOrganizadores() async {
     try {
-      final response = await supabase.from('organizadores').select('id, nombre');
+      final response = await supabase
+          .from('personal_eventos')
+          .select('id, nombre')
+          .eq('rol_id', 3);
+
       setState(() {
         _organizadores = List<Map<String, dynamic>>.from(response);
         _isLoading = false;
@@ -55,7 +59,6 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     }
   }
 
-  // --- Funciones para fechas ---
   Future<void> _seleccionarFecha(bool esInicio) async {
     final fecha = await showDatePicker(
       context: context,
@@ -68,7 +71,6 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     }
   }
 
-  // --- Funciones para Mapbox ---
   Future<void> _buscarDireccion() async {
     if (_direccionController.text.isEmpty) return;
 
@@ -82,9 +84,9 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['features'].isNotEmpty) {
-          final coords = data['features'][0]['center']; // [long, lat]
+          final coords = data['features'][0]['center'];
           final latLng = LatLng(coords[1], coords[0]);
-          
+
           setState(() => _ubicacionSeleccionada = latLng);
           await _abrirMapa(ubicacionInicial: latLng);
         }
@@ -129,16 +131,19 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     }
   }
 
-  // --- Guardado en Supabase ---
   Future<void> _guardarEvento() async {
     if (!_formKey.currentState!.validate()) return;
     if (_fechaInicio == null || _fechaFin == null || _ubicacionSeleccionada == null) {
       _mostrarError('Completa todos los campos obligatorios');
       return;
     }
+    if (_organizadoresSeleccionados.isEmpty) {
+      _mostrarError('Debes seleccionar al menos un organizador');
+      return;
+    }
 
     try {
-      await supabase.from('eventos').insert({
+      final response = await supabase.from('eventos').insert({
         'nombre_evento': _nombreController.text.trim(),
         'descripcion': _descripcionController.text.trim(),
         'cupo_total': int.tryParse(_cupoController.text) ?? 0,
@@ -148,11 +153,27 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
         'fecha_fin': _fechaFin!.toIso8601String(),
         'estado': _estadoController.text.trim(),
         'municipio': _municipioController.text.trim(),
-        'organizador_id': _organizadorSeleccionado,
         'latitud': _ubicacionSeleccionada!.latitude,
         'longitud': _ubicacionSeleccionada!.longitude,
         'direccion': _direccionController.text.trim(),
-      });
+      }).select().single();
+
+      print('Respuesta insert evento: $response');
+
+      // Cambia 'id' si tu tabla usa otro nombre para el campo PK
+      final idEvento = response['id'] ?? response['id_evento'];
+
+      if (idEvento == null) {
+        _mostrarError('No se pudo obtener el ID del evento creado');
+        return;
+      }
+
+      for (final idPersonal in _organizadoresSeleccionados) {
+        await supabase.from('evento_personal').insert({
+          'id_evento': idEvento,
+          'id_personal': idPersonal,
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -171,12 +192,38 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     );
   }
 
-  // --- Widgets ---
+  Widget _buildCheckboxesOrganizadores() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Text('Selecciona organizadores*', style: TextStyle(fontSize: 16)),
+        ),
+        ..._organizadores.map((org) {
+          return CheckboxListTile(
+            title: Text(org['nombre']),
+            value: _organizadoresSeleccionados.contains(org['id']),
+            onChanged: (bool? value) {
+              setState(() {
+                if (value == true) {
+                  _organizadoresSeleccionados.add(org['id']);
+                } else {
+                  _organizadoresSeleccionados.remove(org['id']);
+                }
+              });
+            },
+          );
+        }).toList(),
+      ],
+    );
+  }
+
   Widget _buildImageSection() {
     return Column(
       children: [
         _buildTextField('URL del logo (opcional)', _logoUrlController, esOpcional: true),
-        if (_logoUrlController.text.isNotEmpty) 
+        if (_logoUrlController.text.isNotEmpty)
           Image.network(
             _logoUrlController.text,
             height: 80,
@@ -225,9 +272,9 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
               Icon(Icons.calendar_today, size: 20, color: Colors.grey[600]),
               const SizedBox(width: 12),
               Text(
-                fecha != null 
-                  ? '${fecha.day}/${fecha.month}/${fecha.year}'
-                  : 'Seleccionar fecha',
+                fecha != null
+                    ? '${fecha.day}/${fecha.month}/${fecha.year}'
+                    : 'Seleccionar fecha',
                 style: TextStyle(color: fecha != null ? Colors.black : Colors.grey[600]),
               ),
             ],
@@ -280,25 +327,6 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     );
   }
 
-  Widget _buildOrganizadorDropdown() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<int>(
-        value: _organizadorSeleccionado,
-        hint: const Text('Selecciona un organizador*'),
-        items: _organizadores.map((org) {
-          return DropdownMenuItem<int>(
-            value: org['id'] as int,
-            child: Text(org['nombre'].toString()),
-          );
-        }).toList(),
-        onChanged: (int? value) => setState(() => _organizadorSeleccionado = value),
-        decoration: const InputDecoration(border: OutlineInputBorder()),
-        validator: (value) => value == null ? 'Selecciona un organizador' : null,
-      ),
-    );
-  }
-
   Widget _buildPlaceholder(String tipo) {
     return Container(
       color: Colors.grey[200],
@@ -328,10 +356,10 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
                     _buildDateField('Fecha de término*', _fechaFin, false),
                     _buildTextField('Capacidad*', _cupoController, maxLines: 1),
                     _buildTextField('Descripción', _descripcionController, maxLines: 3),
-                    _buildTextField('Estado*', _estadoController, maxLines: 1),
-                    _buildTextField('Municipio*', _municipioController, maxLines: 1),
+                    _buildTextField('Estado*', _estadoController),
+                    _buildTextField('Municipio*', _municipioController),
                     _buildLocationField(),
-                    _buildOrganizadorDropdown(),
+                    _buildCheckboxesOrganizadores(),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: _guardarEvento,
@@ -362,7 +390,6 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
   }
 }
 
-// -------------------- PANTALLA DEL MAPA (Versión actualizada) --------------------
 class MapaUbicacion extends StatefulWidget {
   final LatLng ubicacionInicial;
   final String apiKey;
@@ -407,13 +434,14 @@ class _MapaUbicacionState extends State<MapaUbicacion> {
       body: FlutterMap(
         mapController: _mapController,
         options: MapOptions(
-          initialCenter: _ubicacionSeleccionada!, 
-          initialZoom: 15.0,                    
+          initialCenter: _ubicacionSeleccionada!,
+          initialZoom: 15.0,
           onTap: (tapPosition, point) => setState(() => _ubicacionSeleccionada = point),
         ),
         children: [
           TileLayer(
-            urlTemplate: 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token=${widget.apiKey}',
+            urlTemplate:
+                'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token=${widget.apiKey}',
             userAgentPackageName: 'com.example.app',
           ),
           MarkerLayer(
