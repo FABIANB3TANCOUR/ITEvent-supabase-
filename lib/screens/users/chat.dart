@@ -192,36 +192,67 @@ class _ChatPageState extends State<ChatPage> {
         .subscribe();
   }
 
-  Future<void> _enviarMensaje() async {
-    final textoOriginal = _mensajeController.text.trim();
+ Future<void> _enviarMensaje() async {
+  final textoOriginal = _mensajeController.text.trim();
+  if (textoOriginal.isEmpty) return;
 
-    if (textoOriginal.isEmpty) return;
+  final textoCensurado = _censurarTexto(textoOriginal);
 
-    final textoCensurado = _censurarTexto(textoOriginal);
+  final nuevoMensaje = {
+    'remitente_id': idYo,
+    'destinatario_id': idOtro,
+    'contenido': textoCensurado,
+  };
 
-    final nuevoMensaje = {
-      'remitente_id': idYo,
-      'destinatario_id': idOtro,
-      'contenido': textoCensurado,
-    };
+  try {
+    await supabase.from('mensajes').insert(nuevoMensaje);
+    _mensajeController.clear();
 
-    try {
-      await supabase.from('mensajes').insert(nuevoMensaje);
-      _mensajeController.clear();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      });
-    } catch (e) {
-      debugPrint('Error al enviar mensaje: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error al enviar mensaje: $e')));
+    // 🔄 1. Obtener nombre del remitente
+    final remitenteData = await supabase
+        .from('usuarios')
+        .select('nombre, apellido')
+        .eq('matricula', idYo)
+        .single();
+
+    final nombreRemitente = '${remitenteData['nombre']} ${remitenteData['apellido']}';
+
+    // 🔄 2. Obtener email del destinatario
+    final destinatarioData = await supabase
+        .from('usuarios')
+        .select('email')
+        .eq('matricula', idOtro)
+        .single();
+
+    final emailDestinatario = destinatarioData['email'];
+
+    // 🔄 3. Llamar a función edge de Deno para enviar correo
+    final response = await supabase.functions.invoke('send-email', body: {
+      'to': [emailDestinatario],
+      'subject': 'Nuevo mensaje en la app',
+      'html': '<strong>Te ha llegado un mensaje de $nombreRemitente.</strong>',
+    });
+
+    if (response.status != 200) {
+      debugPrint('❌ Error al enviar correo: ${response.data}');
     }
+
+    // 🔄 4. Auto scroll
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  } catch (e) {
+    debugPrint('Error al enviar mensaje o correo: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al enviar mensaje o notificación')),
+    );
   }
+}
+
 
   Future<void> _seleccionarImagen() async {
     try {
