@@ -131,21 +131,54 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _cargarUsuarios() async {
-    final data = await supabase
-        .from('usuarios')
-        .select('matricula, nombre, apellido')
-        .eq('matricula', idOtro);
+    try {
+      final Map<int, String> nombres = {};
 
-    final Map<int, String> nombres = {};
-    for (final u in data) {
-      final id = u['matricula'] as int;
-      final nombreCompleto = '${u['nombre']} ${u['apellido']}';
-      nombres[id] = nombreCompleto;
+      if (soyAdmin) {
+        // Soy admin → el otro siempre es un usuario
+        final data = await supabase
+            .from('usuarios')
+            .select('matricula, nombre, apellido')
+            .eq('matricula', idOtro);
+
+        for (final u in data) {
+          final id = u['matricula'] as int;
+          final nombreCompleto = '${u['nombre']} ${u['apellido']}';
+          nombres[id] = nombreCompleto;
+        }
+      } else if (widget.adminId != null) {
+        // Soy usuario → hablando con un admin
+        final data = await supabase
+            .from('administradores')
+            .select('id, nombre')
+            .eq('id', idOtro);
+
+        for (final admin in data) {
+          final id = admin['id'] as int;
+          final nombre = admin['nombre'] as String;
+          nombres[id] = nombre;
+        }
+      } else {
+        // Soy usuario → hablando con otro usuario
+        final data = await supabase
+            .from('usuarios')
+            .select('matricula, nombre, apellido')
+            .eq('matricula', idOtro);
+
+        for (final u in data) {
+          final id = u['matricula'] as int;
+          final nombreCompleto = '${u['nombre']} ${u['apellido']}';
+          nombres[id] = nombreCompleto;
+        }
+      }
+
+      setState(() {
+        _nombresUsuarios = nombres;
+        permisoCargado = true;
+      });
+    } catch (e) {
+      debugPrint('Error al cargar usuarios: $e');
     }
-
-    setState(() {
-      _nombresUsuarios = nombres;
-    });
   }
 
   Future<void> _cargarMensajes() async {
@@ -228,11 +261,27 @@ class _ChatPageState extends State<ChatPage> {
 
     final textoCensurado = _censurarTexto(textoOriginal);
 
-    final nuevoMensaje = {
-      'remitente_id': idYo,
-      'destinatario_id': idOtro,
-      'contenido': textoCensurado,
-    };
+    Map<String, dynamic> nuevoMensaje;
+
+    if (soyAdmin) {
+      nuevoMensaje = {
+        'admin_id': idYo,
+        'destinatario_id': idOtro,
+        'contenido': textoCensurado,
+      };
+    } else if (widget.adminId != null) {
+      nuevoMensaje = {
+        'remitente_id': idYo,
+        'admin_id': idOtro,
+        'contenido': textoCensurado,
+      };
+    } else {
+      nuevoMensaje = {
+        'remitente_id': idYo,
+        'destinatario_id': idOtro,
+        'contenido': textoCensurado,
+      };
+    }
 
     try {
       await supabase.from('mensajes').insert(nuevoMensaje);
