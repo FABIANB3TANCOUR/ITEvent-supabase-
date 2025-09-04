@@ -55,6 +55,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          TextButton(
+            onPressed: () {
+              // Aquí puedes agregar funcionalidad más adelante
+            },
+            child: const Text(
+              'Salir',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
       body:
           loading

@@ -60,6 +60,8 @@ class _ChatPageState extends State<ChatPage> {
     'maricon',
     'joto',
   ];
+  bool puedeEnviar = true;
+  bool permisoCargado = false;
 
   bool get soyAdmin => widget.adminId != null && widget.remitenteId == null;
 
@@ -79,6 +81,7 @@ class _ChatPageState extends State<ChatPage> {
     _cargarUsuarios();
     _cargarMensajes();
     _escucharMensajes();
+    _verificarPermisoEnvio();
   }
 
   @override
@@ -87,6 +90,28 @@ class _ChatPageState extends State<ChatPage> {
     _mensajeController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _verificarPermisoEnvio() async {
+    try {
+      final respuesta =
+          await supabase
+              .from('usuarios')
+              .select('puede_enviar_mensajes')
+              .eq('matricula', idYo)
+              .maybeSingle();
+
+      final valor = respuesta?['puede_enviar_mensajes'];
+      setState(() {
+        puedeEnviar = valor == true;
+        permisoCargado = true;
+      });
+    } catch (e) {
+      setState(() {
+        puedeEnviar = true;
+        permisoCargado = true;
+      });
+    }
   }
 
   String _censurarTexto(String? texto) {
@@ -192,69 +217,85 @@ class _ChatPageState extends State<ChatPage> {
         .subscribe();
   }
 
- Future<void> _enviarMensaje() async {
-  final textoOriginal = _mensajeController.text.trim();
-  if (textoOriginal.isEmpty) return;
-
-  final textoCensurado = _censurarTexto(textoOriginal);
-
-  final nuevoMensaje = {
-    'remitente_id': idYo,
-    'destinatario_id': idOtro,
-    'contenido': textoCensurado,
-  };
-
-  try {
-    await supabase.from('mensajes').insert(nuevoMensaje);
-    _mensajeController.clear();
-
-    // 🔄 1. Obtener nombre del remitente
-    final remitenteData = await supabase
-        .from('usuarios')
-        .select('nombre, apellido')
-        .eq('matricula', idYo)
-        .single();
-
-    final nombreRemitente = '${remitenteData['nombre']} ${remitenteData['apellido']}';
-
-    // 🔄 2. Obtener email del destinatario
-    final destinatarioData = await supabase
-        .from('usuarios')
-        .select('email')
-        .eq('matricula', idOtro)
-        .single();
-
-    final emailDestinatario = destinatarioData['email'];
-
-    // 🔄 3. Llamar a función edge de Deno para enviar correo
-    final response = await supabase.functions.invoke('send-email', body: {
-      'to': [emailDestinatario],
-      'subject': 'Nuevo mensaje en la app',
-      'html': '<strong>Te ha llegado un mensaje de $nombreRemitente.</strong>',
-    });
-
-    if (response.status != 200) {
-      debugPrint('❌ Error al enviar correo: ${response.data}');
+  Future<void> _enviarMensaje() async {
+    if (!puedeEnviar) {
+      debugPrint('🚫 Usuario no tiene permiso para enviar mensajes.');
+      return;
     }
 
-    // 🔄 4. Auto scroll
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
-  } catch (e) {
-    debugPrint('Error al enviar mensaje o correo: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error al enviar mensaje o notificación')),
-    );
-  }
-}
+    final textoOriginal = _mensajeController.text.trim();
+    if (textoOriginal.isEmpty) return;
 
+    final textoCensurado = _censurarTexto(textoOriginal);
+
+    final nuevoMensaje = {
+      'remitente_id': idYo,
+      'destinatario_id': idOtro,
+      'contenido': textoCensurado,
+    };
+
+    try {
+      await supabase.from('mensajes').insert(nuevoMensaje);
+      _mensajeController.clear();
+
+      // 🔄 1. Obtener nombre del remitente
+      final remitenteData =
+          await supabase
+              .from('usuarios')
+              .select('nombre, apellido')
+              .eq('matricula', idYo)
+              .single();
+
+      final nombreRemitente =
+          '${remitenteData['nombre']} ${remitenteData['apellido']}';
+
+      // 🔄 2. Obtener email del destinatario
+      final destinatarioData =
+          await supabase
+              .from('usuarios')
+              .select('email')
+              .eq('matricula', idOtro)
+              .single();
+
+      final emailDestinatario = destinatarioData['email'];
+
+      // 🔄 3. Llamar a función edge de Deno para enviar correo
+      final response = await supabase.functions.invoke(
+        'send-email',
+        body: {
+          'to': [emailDestinatario],
+          'subject': 'Nuevo mensaje en la app',
+          'html':
+              '<strong>Te ha llegado un mensaje de $nombreRemitente.</strong>',
+        },
+      );
+
+      if (response.status != 200) {
+        debugPrint('❌ Error al enviar correo: ${response.data}');
+      }
+
+      // 🔄 4. Auto scroll
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      });
+    } catch (e) {
+      debugPrint('Error al enviar mensaje o correo: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al enviar mensaje o notificación')),
+      );
+    }
+  }
 
   Future<void> _seleccionarImagen() async {
+    if (!puedeEnviar) {
+      debugPrint('🚫 Usuario no tiene permiso para enviar imágenes.');
+      return;
+    }
+
     try {
       Uint8List? bytes;
       String? filename;
@@ -317,6 +358,11 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> _enviarImagen(String url) async {
+    if (!puedeEnviar) {
+      debugPrint('🚫 Usuario no tiene permiso para enviar imágenes.');
+      return;
+    }
+
     final nuevoMensaje = {
       'remitente_id': idYo,
       'destinatario_id': idOtro,
@@ -328,6 +374,10 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!permisoCargado) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_nombresUsuarios[idOtro] ?? 'Chat'),
@@ -425,31 +475,39 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
           const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.image, color: Colors.green),
-                  onPressed: _seleccionarImagen,
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: _mensajeController,
-                    decoration: const InputDecoration(
-                      hintText: 'Escribe tu mensaje...',
-                      border: OutlineInputBorder(),
+          puedeEnviar
+              ? Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.image, color: Colors.green),
+                      onPressed: _seleccionarImagen,
                     ),
-                  ),
+                    Expanded(
+                      child: TextField(
+                        controller: _mensajeController,
+                        decoration: const InputDecoration(
+                          hintText: 'Escribe tu mensaje...',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.send, color: Color(0xFF3966CC)),
+                      onPressed: _enviarMensaje,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Color(0xFF3966CC)),
-                  onPressed: _enviarMensaje,
+              )
+              : const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'No tienes permiso para enviar mensajes.',
+                  style: TextStyle(color: Colors.red),
                 ),
-              ],
-            ),
-          ),
+              ),
         ],
       ),
     );

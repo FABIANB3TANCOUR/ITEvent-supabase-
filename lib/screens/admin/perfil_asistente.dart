@@ -43,7 +43,8 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
             correo,
             telefono,
             foto_url,
-            nota
+            nota,
+            puede_enviar_mensajes
           ''')
               .eq('matricula', widget.matricula)
               .maybeSingle();
@@ -57,6 +58,28 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error al cargar usuario: $e')));
+    }
+  }
+
+  Future<void> _actualizarEstadoChat(bool nuevoEstado) async {
+    try {
+      await supabase
+          .from('usuarios')
+          .update({'puede_enviar_mensajes': nuevoEstado})
+          .eq('matricula', widget.matricula);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(nuevoEstado ? 'Chat desbloqueado' : 'Chat bloqueado'),
+          ),
+        );
+        await _loadUser();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al actualizar: $e')));
     }
   }
 
@@ -82,9 +105,6 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
               ? const Center(child: Text('Usuario no encontrado'))
               : Column(
                 children: [
-                  // Cabecera azul
-
-                  // Bloque gris con avatar y datos
                   Container(
                     color: Colors.grey[900],
                     padding: const EdgeInsets.symmetric(
@@ -200,65 +220,102 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                       horizontal: 16.0,
                       vertical: 8,
                     ),
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder:
-                              (_) => AlertDialog(
-                                title: const Text('¿Eliminar perfil?'),
-                                content: const Text(
-                                  'Esta acción no se puede deshacer.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, false),
-                                    child: const Text('Cancelar'),
-                                  ),
-                                  TextButton(
-                                    onPressed:
-                                        () => Navigator.pop(context, true),
-                                    child: const Text(
-                                      'Eliminar',
-                                      style: TextStyle(color: Colors.red),
+                    child: Column(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (_) => AlertDialog(
+                                    title: const Text('¿Eliminar perfil?'),
+                                    content: const Text(
+                                      'Esta acción no se puede deshacer.',
                                     ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(context, true),
+                                        child: const Text(
+                                          'Eliminar',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                        );
-
-                        if (confirm == true) {
-                          try {
-                            await supabase
-                                .from('usuarios')
-                                .delete()
-                                .eq('matricula', widget.matricula);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Perfil eliminado exitosamente',
-                                  ),
-                                ),
-                              );
-                              Navigator.pop(
-                                context,
-                              ); // Regresa a la pantalla anterior
-                            }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error al eliminar: $e')),
                             );
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.delete),
-                      label: const Text('Eliminar perfil'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
+
+                            if (confirm == true) {
+                              try {
+                                await supabase
+                                    .from('usuarios')
+                                    .delete()
+                                    .eq('matricula', widget.matricula);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Perfil eliminado exitosamente',
+                                      ),
+                                    ),
+                                  );
+                                  Navigator.pop(
+                                    context,
+                                  ); // Regresa a la pantalla anterior
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error al eliminar: $e'),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.delete),
+                          label: const Text('Eliminar perfil'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (user != null &&
+                            user!.containsKey('puede_enviar_mensajes'))
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final nuevoEstado =
+                                  !(user!['puede_enviar_mensajes'] == true);
+                              await _actualizarEstadoChat(nuevoEstado);
+                            },
+                            icon: Icon(
+                              user!['puede_enviar_mensajes'] == true
+                                  ? Icons.block
+                                  : Icons.lock_open,
+                            ),
+                            label: Text(
+                              user!['puede_enviar_mensajes'] == true
+                                  ? 'Bloquear'
+                                  : 'Desbloquear',
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  user!['puede_enviar_mensajes'] == true
+                                      ? Colors.red
+                                      : Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
