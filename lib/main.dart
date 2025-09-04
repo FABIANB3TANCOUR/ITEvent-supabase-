@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:itevent/screens/users/registro_alumno.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // ← NUEVO
 
 import 'screens/type_logins.dart';
@@ -107,26 +106,26 @@ class WelcomePage extends StatelessWidget {
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NuevoUsuarioScreen(),
-                        ),
-                      );
-                    },
+                  // const SizedBox(height: 15),
+                  //   // ElevatedButton(
+                  //     onPressed: () {
+                  //       Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(
+                  //           builder: (_) => const NuevoUsuarioScreen(),
+                  //         ),
+                  //       );
+                  //     },
 
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
-                      side: const BorderSide(color: Colors.indigo),
-                    ),
-                    child: const Text(
-                      'Registrarme',
-                      style: TextStyle(color: Colors.indigo),
-                    ),
-                  ),
+                  //     style: OutlinedButton.styleFrom(
+                  //       minimumSize: const Size(double.infinity, 50),
+                  //       side: const BorderSide(color: Colors.indigo),
+                  //     ),
+                  //     child: const Text(
+                  //       'Registrarme',
+                  //       style: TextStyle(color: Colors.indigo),
+                  //     ),
+                  //   ),
                 ],
               ),
             ),

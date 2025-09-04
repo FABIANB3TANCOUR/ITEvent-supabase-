@@ -17,6 +17,7 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
   Map<String, dynamic>? actividad;
   Map<String, dynamic>? evento;
   bool isLoading = true;
+  int cantidadAsistentes = 0;
 
   @override
   void initState() {
@@ -25,12 +26,15 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
   }
 
   Future<void> _cargarDetalle() async {
+    setState(() => isLoading = true);
+
     try {
+      // 1. Cargar la actividad junto con la información del evento
       final data =
           await supabase
               .from('actividad')
               .select(
-                '*, eventos (nombre_evento, logo_url, fecha_inicio, estado, municipio)',
+                '*, eventos(nombre_evento, logo_url, fecha_inicio, estado, municipio)',
               )
               .eq('id', widget.idActividad)
               .maybeSingle();
@@ -38,6 +42,14 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
       if (data != null) {
         actividad = data;
         evento = data['eventos'];
+
+        // 2. Contar los registros de asistentes para esta actividad
+        final registros = await supabase
+            .from('registro_actividades')
+            .select('id')
+            .eq('id_actividad', widget.idActividad);
+
+        cantidadAsistentes = registros.length; // Guardamos el conteo
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -187,6 +199,22 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
                       ),
                     ),
 
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Cantidad de asistentes: $cantidadAsistentes',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 16),
 
                     // Lugar (texto)
