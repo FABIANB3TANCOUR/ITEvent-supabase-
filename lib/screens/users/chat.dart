@@ -253,15 +253,15 @@ class _ChatPageState extends State<ChatPage> {
       final destinatarioData =
           await supabase
               .from('usuarios')
-              .select('email')
+              .select('correo')
               .eq('matricula', idOtro)
               .single();
 
-      final emailDestinatario = destinatarioData['email'];
+      final emailDestinatario = destinatarioData['correo'];
 
       // 🔄 3. Llamar a función edge de Deno para enviar correo
       final response = await supabase.functions.invoke(
-        'send-email',
+        'notificaciones',
         body: {
           'to': [emailDestinatario],
           'subject': 'Nuevo mensaje en la app',
