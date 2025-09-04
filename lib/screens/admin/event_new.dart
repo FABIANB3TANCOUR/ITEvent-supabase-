@@ -1,9 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class NuevoEventoScreen extends StatefulWidget {
   const NuevoEventoScreen({super.key});
@@ -44,17 +45,19 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
   }
 
   Future<void> _cargarOrganizadores() async {
+    setState(() => _isLoading = true);
     try {
       final response = await supabase
-          .from('personal_eventos')
-          .select('id, nombre')
-          .eq('rol_id', 3);
+          .from('usuarios')
+          .select('matricula, nombre')
+          .eq('rol_id', 3); // solo organizadores
 
       setState(() {
         _organizadores = List<Map<String, dynamic>>.from(response);
         _isLoading = false;
       });
     } catch (e) {
+      _isLoading = false;
       _mostrarError('Error al cargar organizadores: $e');
     }
   }
@@ -100,10 +103,14 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MapaUbicacion(
-          ubicacionInicial: ubicacionInicial ?? _ubicacionSeleccionada ?? const LatLng(19.4326, -99.1332),
-          apiKey: _mapboxApiKey,
-        ),
+        builder:
+            (context) => MapaUbicacion(
+              ubicacionInicial:
+                  ubicacionInicial ??
+                  _ubicacionSeleccionada ??
+                  const LatLng(19.4326, -99.1332),
+              apiKey: _mapboxApiKey,
+            ),
       ),
     );
 
@@ -123,17 +130,21 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final direccion = data['features'][0]['place_name'] ?? 'Ubicación seleccionada';
+        final direccion =
+            data['features'][0]['place_name'] ?? 'Ubicación seleccionada';
         _direccionController.text = direccion;
       }
     } catch (e) {
-      _direccionController.text = 'Coordenadas: ${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}';
+      _direccionController.text =
+          'Coordenadas: ${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}';
     }
   }
 
   Future<void> _guardarEvento() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_fechaInicio == null || _fechaFin == null || _ubicacionSeleccionada == null) {
+    if (_fechaInicio == null ||
+        _fechaFin == null ||
+        _ubicacionSeleccionada == null) {
       _mostrarError('Completa todos los campos obligatorios');
       return;
     }
@@ -143,20 +154,25 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     }
 
     try {
-      final response = await supabase.from('eventos').insert({
-        'nombre_evento': _nombreController.text.trim(),
-        'descripcion': _descripcionController.text.trim(),
-        'cupo_total': int.tryParse(_cupoController.text) ?? 0,
-        'logo_url': _logoUrlController.text.trim(),
-        'portada_url': _portadaUrlController.text.trim(),
-        'fecha_inicio': _fechaInicio!.toIso8601String(),
-        'fecha_fin': _fechaFin!.toIso8601String(),
-        'estado': _estadoController.text.trim(),
-        'municipio': _municipioController.text.trim(),
-        'latitud': _ubicacionSeleccionada!.latitude,
-        'longitud': _ubicacionSeleccionada!.longitude,
-        'direccion': _direccionController.text.trim(),
-      }).select().single();
+      final response =
+          await supabase
+              .from('eventos')
+              .insert({
+                'nombre_evento': _nombreController.text.trim(),
+                'descripcion': _descripcionController.text.trim(),
+                'cupo_total': int.tryParse(_cupoController.text) ?? 0,
+                'logo_url': _logoUrlController.text.trim(),
+                'portada_url': _portadaUrlController.text.trim(),
+                'fecha_inicio': _fechaInicio!.toIso8601String(),
+                'fecha_fin': _fechaFin!.toIso8601String(),
+                'estado': _estadoController.text.trim(),
+                'municipio': _municipioController.text.trim(),
+                'latitud': _ubicacionSeleccionada!.latitude,
+                'longitud': _ubicacionSeleccionada!.longitude,
+                'direccion': _direccionController.text.trim(),
+              })
+              .select()
+              .single();
 
       print('Respuesta insert evento: $response');
 
@@ -168,11 +184,20 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
         return;
       }
 
-      for (final idPersonal in _organizadoresSeleccionados) {
-        await supabase.from('evento_personal').insert({
-          'id_evento': idEvento,
-          'id_personal': idPersonal,
-        });
+      // Primero eliminamos los organizadores actuales del evento
+      await supabase
+          .from('evento_organizador')
+          .delete()
+          .eq('id_evento', idEvento);
+
+      // Luego insertamos los nuevos organizadores seleccionados
+      if (_organizadoresSeleccionados.isNotEmpty) {
+        final nuevosOrganizadores =
+            _organizadoresSeleccionados.map((idUsuario) {
+              return {'id_evento': idEvento, 'id_usuario': idUsuario};
+            }).toList();
+
+        await supabase.from('evento_organizador').insert(nuevosOrganizadores);
       }
 
       if (mounted) {
@@ -187,9 +212,9 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
   }
 
   void _mostrarError(String mensaje) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('❌ $mensaje')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('❌ $mensaje')));
   }
 
   Widget _buildCheckboxesOrganizadores() {
@@ -198,18 +223,26 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 8),
-          child: Text('Selecciona organizadores*', style: TextStyle(fontSize: 16)),
+          child: Text(
+            'Selecciona organizadores*',
+            style: TextStyle(fontSize: 16),
+          ),
         ),
-        ..._organizadores.map((org) {
+        ..._organizadores.map((usuario) {
+          final idUsuario =
+              usuario['id']; // corresponde a matricula en usuarios
+          final nombre = usuario['nombre'] ?? '';
+          final seleccionado = _organizadoresSeleccionados.contains(idUsuario);
+
           return CheckboxListTile(
-            title: Text(org['nombre']),
-            value: _organizadoresSeleccionados.contains(org['id']),
+            title: Text(nombre),
+            value: seleccionado,
             onChanged: (bool? value) {
               setState(() {
                 if (value == true) {
-                  _organizadoresSeleccionados.add(org['id']);
+                  _organizadoresSeleccionados.add(idUsuario);
                 } else {
-                  _organizadoresSeleccionados.remove(org['id']);
+                  _organizadoresSeleccionados.remove(idUsuario);
                 }
               });
             },
@@ -222,7 +255,11 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
   Widget _buildImageSection() {
     return Column(
       children: [
-        _buildTextField('URL del logo (opcional)', _logoUrlController, esOpcional: true),
+        _buildTextField(
+          'URL del logo (opcional)',
+          _logoUrlController,
+          esOpcional: true,
+        ),
         if (_logoUrlController.text.isNotEmpty)
           Image.network(
             _logoUrlController.text,
@@ -230,7 +267,11 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
             errorBuilder: (_, __, ___) => _buildPlaceholder('Logo'),
           ),
         const SizedBox(height: 16),
-        _buildTextField('URL de portada (opcional)', _portadaUrlController, esOpcional: true),
+        _buildTextField(
+          'URL de portada (opcional)',
+          _portadaUrlController,
+          esOpcional: true,
+        ),
         if (_portadaUrlController.text.isNotEmpty)
           Image.network(
             _portadaUrlController.text,
@@ -242,7 +283,12 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool esOpcional = false, int? maxLines}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool esOpcional = false,
+    int? maxLines,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
@@ -252,7 +298,10 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
           labelText: label,
           border: const OutlineInputBorder(),
         ),
-        validator: esOpcional ? null : (value) => value!.isEmpty ? 'Campo requerido' : null,
+        validator:
+            esOpcional
+                ? null
+                : (value) => value!.isEmpty ? 'Campo requerido' : null,
       ),
     );
   }
@@ -275,7 +324,9 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
                 fecha != null
                     ? '${fecha.day}/${fecha.month}/${fecha.year}'
                     : 'Seleccionar fecha',
-                style: TextStyle(color: fecha != null ? Colors.black : Colors.grey[600]),
+                style: TextStyle(
+                  color: fecha != null ? Colors.black : Colors.grey[600],
+                ),
               ),
             ],
           ),
@@ -301,17 +352,18 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
                     hintText: 'Buscar dirección',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => _ubicacionSeleccionada == null ? 'Selecciona una ubicación' : null,
+                  validator:
+                      (value) =>
+                          _ubicacionSeleccionada == null
+                              ? 'Selecciona una ubicación'
+                              : null,
                 ),
               ),
               IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: _buscarDireccion,
               ),
-              IconButton(
-                icon: const Icon(Icons.map),
-                onPressed: _abrirMapa,
-              ),
+              IconButton(icon: const Icon(Icons.map), onPressed: _abrirMapa),
             ],
           ),
           if (_ubicacionSeleccionada != null)
@@ -342,37 +394,49 @@ class _NuevoEventoScreenState extends State<NuevoEventoScreen> {
         title: const Text('Nuevo Evento'),
         backgroundColor: Colors.blue[800],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    _buildImageSection(),
-                    _buildTextField('Nombre del evento*', _nombreController),
-                    _buildDateField('Fecha de inicio*', _fechaInicio, true),
-                    _buildDateField('Fecha de término*', _fechaFin, false),
-                    _buildTextField('Capacidad*', _cupoController, maxLines: 1),
-                    _buildTextField('Descripción', _descripcionController, maxLines: 3),
-                    _buildTextField('Estado*', _estadoController),
-                    _buildTextField('Municipio*', _municipioController),
-                    _buildLocationField(),
-                    _buildCheckboxesOrganizadores(),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _guardarEvento,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue[800],
-                        minimumSize: const Size(double.infinity, 50),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildImageSection(),
+                      _buildTextField('Nombre del evento*', _nombreController),
+                      _buildDateField('Fecha de inicio*', _fechaInicio, true),
+                      _buildDateField('Fecha de término*', _fechaFin, false),
+                      _buildTextField(
+                        'Capacidad*',
+                        _cupoController,
+                        maxLines: 1,
                       ),
-                      child: const Text('GUARDAR EVENTO', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
+                      _buildTextField(
+                        'Descripción',
+                        _descripcionController,
+                        maxLines: 3,
+                      ),
+                      _buildTextField('Estado*', _estadoController),
+                      _buildTextField('Municipio*', _municipioController),
+                      _buildLocationField(),
+                      _buildCheckboxesOrganizadores(),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _guardarEvento,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue[800],
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: const Text(
+                          'GUARDAR EVENTO',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 
@@ -436,7 +500,9 @@ class _MapaUbicacionState extends State<MapaUbicacion> {
         options: MapOptions(
           initialCenter: _ubicacionSeleccionada!,
           initialZoom: 15.0,
-          onTap: (tapPosition, point) => setState(() => _ubicacionSeleccionada = point),
+          onTap:
+              (tapPosition, point) =>
+                  setState(() => _ubicacionSeleccionada = point),
         ),
         children: [
           TileLayer(
@@ -448,7 +514,11 @@ class _MapaUbicacionState extends State<MapaUbicacion> {
             markers: [
               Marker(
                 point: _ubicacionSeleccionada!,
-                child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                child: const Icon(
+                  Icons.location_pin,
+                  color: Colors.red,
+                  size: 40,
+                ),
                 width: 40,
                 height: 40,
               ),
@@ -459,7 +529,10 @@ class _MapaUbicacionState extends State<MapaUbicacion> {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.my_location),
         onPressed: () {
-          _mapController.move(_ubicacionSeleccionada!, _mapController.camera.zoom);
+          _mapController.move(
+            _ubicacionSeleccionada!,
+            _mapController.camera.zoom,
+          );
         },
       ),
     );

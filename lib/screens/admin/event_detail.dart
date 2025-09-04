@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:itevent/screens/admin/agenda_detail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:itevent/screens/admin/event_edit.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EventDetailAdmin extends StatefulWidget {
   final int eventId;
@@ -32,39 +32,52 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
   Future<void> _loadEventDetail() async {
     setState(() => _isLoading = true);
     try {
-      final data = await supabase
-          .from('eventos')
-          .select('''
-            id,
-            nombre_evento,
-            cupo_total,
-            fecha_inicio,
-            fecha_fin,
-            portada_url,
-            created_at,
-            descripcion,
-            estado,
-            municipio,
-            latitud,
-            longitud,
-            direccion,
-            evento_personal (
-              personal_eventos (
-                nombre
-              )
-            )
-          ''')
-          .eq('id', widget.eventId)
-          .maybeSingle();
+      // Cargar datos del evento
+      final data =
+          await supabase
+              .from('eventos')
+              .select('''
+          id,
+          nombre_evento,
+          cupo_total,
+          fecha_inicio,
+          fecha_fin,
+          portada_url,
+          created_at,
+          descripcion,
+          estado,
+          municipio,
+          latitud,
+          longitud,
+          direccion
+        ''')
+              .eq('id', widget.eventId)
+              .maybeSingle();
+
+      if (data == null) throw Exception('Evento no encontrado');
+
+      // Cargar organizadores
+      final organizadoresData = await supabase
+          .from('evento_organizador')
+          .select('usuario:usuarios!inner(nombre)')
+          .eq('id_evento', widget.eventId);
+
+      final List<String> nombresOrganizadores =
+          organizadoresData
+              .map<String>((e) => e['usuario']['nombre'] as String)
+              .toList();
 
       setState(() {
-        event = data;
+        event = {
+          ...data,
+          'organizadores': nombresOrganizadores, // agregamos lista de nombres
+        };
         _isLoading = false;
 
-        if (data?['latitud'] != null && data?['longitud'] != null) {
+        if (data['latitud'] != null && data['longitud'] != null) {
           _ubicacionEvento = LatLng(
-            (data?['latitud'] as num).toDouble(),
-            (data?['longitud'] as num).toDouble(),
+            (data['latitud'] as num).toDouble(),
+            (data['longitud'] as num).toDouble(),
           );
         }
 
@@ -76,29 +89,32 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar el evento: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar el evento: $e')));
     }
   }
 
   Future<void> _eliminarEvento() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar evento'),
-        content: const Text('¿Estás seguro de que deseas eliminar este evento?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Eliminar evento'),
+            content: const Text(
+              '¿Estás seguro de que deseas eliminar este evento?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Eliminar'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
     );
 
     if (confirm != true) return;
@@ -110,9 +126,9 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
         const SnackBar(content: Text('Evento eliminado exitosamente')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al eliminar evento: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al eliminar evento: $e')));
     }
   }
 
@@ -124,9 +140,7 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
           color: Colors.grey[200],
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Center(
-          child: Text('Ubicación no disponible'),
-        ),
+        child: const Center(child: Text('Ubicación no disponible')),
       );
     }
 
@@ -147,14 +161,19 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token=$_mapboxApiKey',
+              urlTemplate:
+                  'https://api.mapbox.com/styles/v1/mapbox/streets-v12/tiles/{z}/{x}/{y}@2x?access_token=$_mapboxApiKey',
               userAgentPackageName: 'com.example.app',
             ),
             MarkerLayer(
               markers: [
                 Marker(
                   point: _ubicacionEvento!,
-                  child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                  child: const Icon(
+                    Icons.location_pin,
+                    color: Colors.red,
+                    size: 40,
+                  ),
                 ),
               ],
             ),
@@ -175,8 +194,18 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
 
   String _mesNombre(int mes) {
     const meses = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
     ];
     return meses[mes - 1];
   }
@@ -276,98 +305,127 @@ class _EventDetailAdminState extends State<EventDetailAdmin> {
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : event == null
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : event == null
               ? const Center(child: Text('Evento no encontrado'))
               : ListView(
-                  children: [
-                    if (event!['portada_url'] != null)
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(16),
-                        ),
-                        child: Image.network(
-                          event!['portada_url'],
-                          height: 220,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
+                children: [
+                  if (event!['portada_url'] != null)
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(16),
                       ),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            event!['nombre_evento'] ?? 'Sin nombre',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(localidad, style: TextStyle(color: Colors.grey[700])),
-                          Text(
-                            _formatearFecha(event!['fecha_fin']),
-                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                          ),
-                          const SizedBox(height: 20),
-                          const Divider(),
-                          const SizedBox(height: 10),
-                          _seccionTitulo('Ubicación'),
-                          const SizedBox(height: 12),
-                          _buildMapaUbicacion(),
-                          if (event?['direccion'] != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                event!['direccion'],
-                                style: const TextStyle(color: Colors.black87),
-                              ),
-                            ),
-                          const SizedBox(height: 20),
-                          const Divider(),
-                          const SizedBox(height: 10),
-                          _seccionTitulo('Sobre el evento'),
-                          const SizedBox(height: 12),
-                          _infoCard([
-                            _infoText('Descripción', event!['descripcion']),
-                            _infoText(
-                              'Organizadores',
-                              (event!['evento_personal'] as List)
-                                  .map((e) => e['personal_eventos']['nombre'])
-                                  .join(', '),
-                            ),
-                            _infoText('Cupo total', event!['cupo_total'].toString()),
-                            _infoText('Fecha de inicio', _formatearFecha(event!['fecha_inicio'])),
-                            _infoText('Fecha de fin', _formatearFecha(event!['fecha_fin'])),
-                            _infoText('Creado en', _formatearFecha(event!['created_at'])),
-                          ]),
-                          const SizedBox(height: 25),
-                          _actionButton('Modificar datos', Colors.blue, () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => EditEventScreen(eventId: event!['id']),
-                              ),
-                            );
-                          }),
-                          _actionButton('Ver actividades', Colors.blue, () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AgendaEventoScreen(idEvento: widget.eventId),
-                              ),
-                            );
-                          }),
-                          _actionButton('Eliminar Evento', Colors.orange, _eliminarEvento,
-                              colorTexto: Colors.black),
-                        ],
+                      child: Image.network(
+                        event!['portada_url'],
+                        height: 220,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
                       ),
                     ),
-                  ],
-                ),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          event!['nombre_evento'] ?? 'Sin nombre',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          localidad,
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                        Text(
+                          _formatearFecha(event!['fecha_fin']),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Divider(),
+                        const SizedBox(height: 10),
+                        _seccionTitulo('Ubicación'),
+                        const SizedBox(height: 12),
+                        _buildMapaUbicacion(),
+                        if (event?['direccion'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              event!['direccion'],
+                              style: const TextStyle(color: Colors.black87),
+                            ),
+                          ),
+                        const SizedBox(height: 20),
+                        const Divider(),
+                        const SizedBox(height: 10),
+                        _seccionTitulo('Sobre el evento'),
+                        const SizedBox(height: 12),
+                        _infoCard([
+                          _infoText('Descripción', event!['descripcion']),
+                          _infoText(
+                            'Organizadores',
+                            (event?['organizadores'] as List<String>?)?.join(
+                                  ', ',
+                                ) ??
+                                'Sin organizadores',
+                          ),
+
+                          _infoText(
+                            'Cupo total',
+                            event!['cupo_total'].toString(),
+                          ),
+                          _infoText(
+                            'Fecha de inicio',
+                            _formatearFecha(event!['fecha_inicio']),
+                          ),
+                          _infoText(
+                            'Fecha de fin',
+                            _formatearFecha(event!['fecha_fin']),
+                          ),
+                          _infoText(
+                            'Creado en',
+                            _formatearFecha(event!['created_at']),
+                          ),
+                        ]),
+                        const SizedBox(height: 25),
+                        _actionButton('Modificar datos', Colors.blue, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => EditEventScreen(eventId: event!['id']),
+                            ),
+                          );
+                        }),
+                        _actionButton('Ver actividades', Colors.blue, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => AgendaEventoScreen(
+                                    idEvento: widget.eventId,
+                                  ),
+                            ),
+                          );
+                        }),
+                        _actionButton(
+                          'Eliminar Evento',
+                          Colors.orange,
+                          _eliminarEvento,
+                          colorTexto: Colors.black,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
     );
   }
 }

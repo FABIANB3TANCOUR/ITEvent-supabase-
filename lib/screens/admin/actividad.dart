@@ -202,8 +202,18 @@ class _DetalleActividadScreenState extends State<DetalleActividadScreen> {
                     const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            'Capacidad del evento: ${actividad!['capacidad']}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
                           Text(
                             'Cantidad de asistentes: $cantidadAsistentes',
                             style: const TextStyle(
